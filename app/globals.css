@@ -150,3 +150,64 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: oklch(0.6 0 0 / 0.5);
 }
+
+/* Code syntax highlighting - dark theme */
+.hljs {
+  color: oklch(0.9 0 0);
+  background: transparent;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-title,
+.hljs-section,
+.hljs-doctag,
+.hljs-name,
+.hljs-strong {
+  color: oklch(0.75 0.15 280);
+  font-weight: 500;
+}
+
+.hljs-comment {
+  color: oklch(0.55 0 0);
+}
+
+.hljs-string,
+.hljs-title.class_,
+.hljs-literal,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-addition {
+  color: oklch(0.75 0.15 150);
+}
+
+.hljs-number,
+.hljs-attr,
+.hljs-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-type {
+  color: oklch(0.8 0.15 60);
+}
+
+.hljs-symbol,
+.hljs-bullet,
+.hljs-subst,
+.hljs-meta,
+.hljs-link {
+  color: oklch(0.75 0.15 40);
+}
+
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: oklch(0.8 0.12 200);
+}
+
+.hljs-deletion {
+  color: oklch(0.65 0.2 25);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}

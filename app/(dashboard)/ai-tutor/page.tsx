@@ -1,185 +1,399 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useRef, useEffect, useCallback } from "react"
+import { useChat } from "@ai-sdk/react"
+import { useChatStore } from "@/lib/chat-store"
+import { ChatSidebar } from "@/components/chat/chat-sidebar"
+import { MarkdownRenderer } from "@/components/chat/markdown-renderer"
+import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Bot, Send, Sparkles, BookOpen, Calculator, FlaskConical, Lightbulb, User } from "lucide-react"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Bot,
+  Send,
+  Sparkles,
+  BookOpen,
+  Calculator,
+  FlaskConical,
+  Lightbulb,
+  User,
+  Calendar,
+  Brain,
+  Paperclip,
+  X,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  RefreshCw,
+  StopCircle,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
 
-type Message = {
-  id: number
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-}
-
-const quickPrompts = [
-  { label: "Explain Concepts", icon: BookOpen, prompt: "Explain the concept of..." },
-  { label: "Solve Problem", icon: Calculator, prompt: "Help me solve this problem..." },
-  { label: "Study Tips", icon: Lightbulb, prompt: "Give me study tips for..." },
-  { label: "Quiz Me", icon: FlaskConical, prompt: "Quiz me on..." },
-]
-
-const initialMessages: Message[] = [
+const suggestedPrompts = [
   {
-    id: 1,
-    role: "assistant",
-    content: "Hello! I'm your AI Study Assistant. I can help you understand complex topics, solve problems, create study plans, and quiz you on your subjects. What would you like to learn today?",
-    timestamp: new Date(),
+    label: "Build Study Plan",
+    icon: Calendar,
+    prompt: "Help me create a study plan for my upcoming exams. I have finals in 2 weeks for Calculus, Physics, and Computer Science.",
+  },
+  {
+    label: "Explain Topic",
+    icon: BookOpen,
+    prompt: "Explain the concept of neural networks in simple terms with examples.",
+  },
+  {
+    label: "Quiz Me",
+    icon: FlaskConical,
+    prompt: "Create a 5-question quiz on derivatives and integrals to test my understanding.",
+  },
+  {
+    label: "Solve Problem",
+    icon: Calculator,
+    prompt: "Help me solve this problem step by step:",
+  },
+  {
+    label: "Summarize Notes",
+    icon: FileText,
+    prompt: "Summarize the key points from my notes on:",
+  },
+  {
+    label: "Study Tips",
+    icon: Lightbulb,
+    prompt: "Give me effective study strategies for retaining information in a technical subject.",
   },
 ]
 
-export default function AITutorPage() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
-  const [input, setInput] = useState("")
-  const [isTyping, setIsTyping] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+type FileAttachment = {
+  name: string
+  type: string
+  url: string
+  file: File
+}
 
-  const scrollToBottom = () => {
+export default function AITutorPage() {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  
+  const {
+    activeConversationId,
+    createConversation,
+    getActiveConversation,
+    addMessage,
+    updateMessage,
+  } = useChatStore()
+
+  const conversation = getActiveConversation()
+  const [attachments, setAttachments] = useState<FileAttachment[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // Initialize conversation if none exists
+  useEffect(() => {
+    if (!activeConversationId && !isInitialized) {
+      createConversation()
+      setIsInitialized(true)
+    }
+  }, [activeConversationId, createConversation, isInitialized])
+
+  const {
+    messages,
+    input,
+    setInput,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    stop,
+    reload,
+  } = useChat({
+    api: "/api/chat",
+    initialMessages: conversation?.messages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+    })) || [],
+    onFinish: (message) => {
+      if (activeConversationId) {
+        addMessage(activeConversationId, {
+          role: "assistant",
+          content: message.content,
+        })
+      }
+    },
+  })
+
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+  }, [])
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, scrollToBottom])
 
-  const handleSend = async () => {
-    if (!input.trim()) return
-
-    const userMessage: Message = {
-      id: messages.length + 1,
-      role: "user",
-      content: input,
-      timestamp: new Date(),
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`
     }
+  }, [input])
 
-    setMessages(prev => [...prev, userMessage])
-    setInput("")
-    setIsTyping(true)
-
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "That's a great question! Let me break this down for you...\n\nThe key concept here involves understanding the relationship between the variables. Think of it like building blocks - each piece connects to form the whole picture.\n\nWould you like me to provide a specific example or practice problem?",
-        "I'd be happy to help with that! Here's a step-by-step approach:\n\n1. First, identify the main components\n2. Analyze the relationships between them\n3. Apply the relevant formulas or concepts\n4. Verify your solution\n\nShall I elaborate on any of these steps?",
-        "Based on your question, I think you're dealing with a fundamental concept in this subject. Let me explain it in simpler terms...\n\nThe core idea is that everything connects in a logical sequence. Once you understand the foundation, the advanced topics become much clearer.\n\nDo you want me to create some practice questions for you?",
-      ]
-      
-      const assistantMessage: Message = {
-        id: messages.length + 2,
-        role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: new Date(),
-      }
-      
-      setMessages(prev => [...prev, assistantMessage])
-      setIsTyping(false)
-    }, 1500)
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const newAttachments: FileAttachment[] = files.map((file) => ({
+      name: file.name,
+      type: file.type,
+      url: URL.createObjectURL(file),
+      file,
+    }))
+    setAttachments((prev) => [...prev, ...newAttachments])
   }
 
-  const handleQuickPrompt = (prompt: string) => {
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => {
+      const newAttachments = [...prev]
+      URL.revokeObjectURL(newAttachments[index].url)
+      newAttachments.splice(index, 1)
+      return newAttachments
+    })
+  }
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim() && attachments.length === 0) return
+
+    // Add user message to store
+    if (activeConversationId) {
+      const attachmentInfo = attachments.length > 0
+        ? `\n\n[Attached files: ${attachments.map(a => a.name).join(", ")}]`
+        : ""
+      addMessage(activeConversationId, {
+        role: "user",
+        content: input + attachmentInfo,
+        attachments: attachments.map(a => ({ name: a.name, type: a.type, url: a.url })),
+      })
+    }
+
+    // Clear attachments
+    setAttachments([])
+
+    // Submit to AI
+    handleSubmit(e)
+  }
+
+  const handlePromptClick = (prompt: string) => {
     setInput(prompt)
+    textareaRef.current?.focus()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSend(e)
+    }
   }
 
   return (
-    <div className="container max-w-5xl mx-auto p-6 h-[calc(100vh-4rem)] flex flex-col">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Bot className="h-6 w-6 text-primary" />
-            AI Tutor
-          </h1>
-          <p className="text-muted-foreground">Your personal study assistant</p>
-        </div>
-        <Badge className="gap-1 bg-primary/10 text-primary border-primary/20">
-          <Sparkles className="h-3 w-3" />
-          Powered by AI
-        </Badge>
-      </div>
+    <div className="flex h-[calc(100vh-4rem)]">
+      <ChatSidebar />
 
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {quickPrompts.map((item, index) => (
-          <Button
-            key={index}
-            variant="outline"
-            size="sm"
-            className="gap-2 rounded-xl"
-            onClick={() => handleQuickPrompt(item.prompt)}
-          >
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </Button>
-        ))}
-      </div>
-
-      <Card className="flex-1 rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm flex flex-col overflow-hidden">
-        <CardContent className="flex-1 overflow-auto p-4 space-y-4">
-          {messages.map(message => (
-            <div
-              key={message.id}
-              className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              {message.role === "assistant" && (
-                <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-                  <Bot className="h-4 w-4 text-primary-foreground" />
-                </div>
-              )}
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                <p className="text-xs opacity-60 mt-2">
-                  {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
-              {message.role === "user" && (
-                <div className="h-8 w-8 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                  <User className="h-4 w-4" />
-                </div>
-              )}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
+              <Bot className="h-5 w-5 text-primary-foreground" />
             </div>
-          ))}
-          {isTyping && (
-            <div className="flex gap-3 items-center">
-              <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
-                <Bot className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <div className="bg-muted rounded-2xl px-4 py-3">
-                <div className="flex gap-1">
-                  <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <div className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
-                </div>
-              </div>
+            <div>
+              <h1 className="text-lg font-semibold flex items-center gap-2">
+                AI Tutor
+                <Badge className="gap-1 bg-primary/10 text-primary border-primary/20 text-xs">
+                  <Sparkles className="h-3 w-3" />
+                  GPT-4
+                </Badge>
+              </h1>
+              <p className="text-sm text-muted-foreground">Your academic copilot</p>
             </div>
-          )}
-          <div ref={messagesEndRef} />
-        </CardContent>
-
-        <div className="p-4 border-t border-border/50">
-          <div className="flex gap-3">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Ask me anything about your studies..."
-              className="flex-1 h-12 rounded-xl bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"
-            />
-            <Button
-              onClick={handleSend}
-              disabled={!input.trim() || isTyping}
-              className="h-12 w-12 rounded-xl"
-            >
-              <Send className="h-5 w-5" />
-            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="gap-1">
+              <Brain className="h-3 w-3" />
+              {messages.length} messages
+            </Badge>
           </div>
         </div>
-      </Card>
+
+        {/* Messages */}
+        <ScrollArea className="flex-1 px-6">
+          <div className="max-w-3xl mx-auto py-6 space-y-6">
+            {messages.length === 0 && (
+              <div className="text-center py-12">
+                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Bot className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="text-xl font-semibold mb-2">Welcome to AI Tutor</h2>
+                <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                  I&apos;m your personal study assistant. Ask me anything about your coursework, and I&apos;ll help you learn effectively.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
+                  {suggestedPrompts.map((prompt, index) => (
+                    <Card
+                      key={index}
+                      className="p-4 cursor-pointer hover:bg-muted/50 transition-colors rounded-xl border-border/50"
+                      onClick={() => handlePromptClick(prompt.prompt)}
+                    >
+                      <prompt.icon className="h-5 w-5 text-primary mb-2" />
+                      <p className="text-sm font-medium">{prompt.label}</p>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {messages.map((message, index) => (
+              <div
+                key={message.id}
+                className={cn(
+                  "flex gap-4",
+                  message.role === "user" ? "justify-end" : "justify-start"
+                )}
+              >
+                {message.role === "assistant" && (
+                  <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+                    <Bot className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    "max-w-[80%] rounded-2xl px-4 py-3",
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/50"
+                  )}
+                >
+                  {message.role === "assistant" ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <MarkdownRenderer content={message.content} />
+                    </div>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  )}
+                </div>
+                {message.role === "user" && (
+                  <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                    <User className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {isLoading && (
+              <div className="flex gap-4">
+                <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+                  <Bot className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <div className="bg-muted/50 rounded-2xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-muted-foreground">Thinking...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+
+        {/* Input Area */}
+        <div className="px-6 py-4 border-t border-border/50">
+          <div className="max-w-3xl mx-auto">
+            {/* Attachments Preview */}
+            {attachments.length > 0 && (
+              <div className="flex gap-2 mb-3 flex-wrap">
+                {attachments.map((attachment, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2"
+                  >
+                    {attachment.type.startsWith("image/") ? (
+                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="text-sm truncate max-w-[150px]">
+                      {attachment.name}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => removeAttachment(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <form onSubmit={handleSend} className="relative">
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask me anything about your studies..."
+                className="min-h-[56px] max-h-[200px] resize-none rounded-2xl bg-muted/50 border-0 pr-24 focus-visible:ring-1 focus-visible:ring-primary"
+                rows={1}
+              />
+              <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.txt,.doc,.docx"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-xl"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                {isLoading ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl"
+                    onClick={stop}
+                  >
+                    <StopCircle className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl"
+                    disabled={!input.trim() && attachments.length === 0}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </form>
+
+            <p className="text-xs text-muted-foreground text-center mt-3">
+              Press Enter to send, Shift+Enter for new line
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
