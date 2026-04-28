@@ -20,6 +20,10 @@ import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
+interface TopNavbarProps {
+  user?: SupabaseUser | null
+}
+
 const notifications = [
   { id: 1, title: "Assignment Due", description: "CS201 Problem Set due in 2 hours", time: "2h", unread: true },
   { id: 2, title: "Study Reminder", description: "Time for your Physics study block", time: "30m", unread: true },
@@ -33,15 +37,21 @@ const searchResults = [
   { type: "event", title: "Physics Exam - Apr 30", href: "/calendar", icon: Calendar },
 ]
 
-export function TopNavbar() {
+export function TopNavbar({ user: propUser }: TopNavbarProps) {
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [user, setUser] = useState<SupabaseUser | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<SupabaseUser | null>(propUser ?? null)
+  const [isLoading, setIsLoading] = useState(!propUser)
 
   useEffect(() => {
+    if (propUser) {
+      setUser(propUser)
+      setIsLoading(false)
+      return
+    }
+
     const supabase = createClient()
     
     // Get initial user
@@ -56,7 +66,7 @@ export function TopNavbar() {
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [propUser])
 
   const handleLogout = async () => {
     const supabase = createClient()
