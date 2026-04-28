@@ -104,12 +104,11 @@ export default function AITutorPage() {
     handleSubmit,
     isLoading,
     stop,
-    reload,
   } = useChat({
     api: "/api/chat",
     initialMessages: conversation?.messages.map((m) => ({
       id: m.id,
-      role: m.role,
+      role: m.role as "user" | "assistant",
       content: m.content,
     })) || [],
     onFinish: (message) => {
@@ -121,6 +120,9 @@ export default function AITutorPage() {
       }
     },
   })
+
+  // Ensure input is always a string (fallback for SSR)
+  const inputValue = input ?? ""
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -136,7 +138,7 @@ export default function AITutorPage() {
       textareaRef.current.style.height = "auto"
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`
     }
-  }, [input])
+  }, [inputValue])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -160,7 +162,7 @@ export default function AITutorPage() {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() && attachments.length === 0) return
+    if (!inputValue.trim() && attachments.length === 0) return
 
     // Add user message to store
     if (activeConversationId) {
@@ -169,7 +171,7 @@ export default function AITutorPage() {
         : ""
       addMessage(activeConversationId, {
         role: "user",
-        content: input + attachmentInfo,
+        content: inputValue + attachmentInfo,
         attachments: attachments.map(a => ({ name: a.name, type: a.type, url: a.url })),
       })
     }
@@ -340,7 +342,7 @@ export default function AITutorPage() {
             <form onSubmit={handleSend} className="relative">
               <Textarea
                 ref={textareaRef}
-                value={input}
+                value={inputValue}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask me anything about your studies..."
@@ -380,7 +382,7 @@ export default function AITutorPage() {
                     type="submit"
                     size="icon"
                     className="h-9 w-9 rounded-xl"
-                    disabled={!input.trim() && attachments.length === 0}
+                    disabled={!inputValue.trim() && attachments.length === 0}
                   >
                     <Send className="h-4 w-4" />
                   </Button>
