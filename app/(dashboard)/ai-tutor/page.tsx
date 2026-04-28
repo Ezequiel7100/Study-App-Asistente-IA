@@ -26,39 +26,39 @@ import {
   FileText,
   Image as ImageIcon,
   Loader2,
-  RefreshCw,
   StopCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useI18n } from "@/lib/i18n"
 
 const suggestedPrompts = [
   {
-    label: "Build Study Plan",
+    labelKey: "aiTutor.buildStudyPlan",
     icon: Calendar,
     prompt: "Help me create a study plan for my upcoming exams. I have finals in 2 weeks for Calculus, Physics, and Computer Science.",
   },
   {
-    label: "Explain Topic",
+    labelKey: "aiTutor.explainTopic",
     icon: BookOpen,
     prompt: "Explain the concept of neural networks in simple terms with examples.",
   },
   {
-    label: "Quiz Me",
+    labelKey: "aiTutor.quizMe",
     icon: FlaskConical,
     prompt: "Create a 5-question quiz on derivatives and integrals to test my understanding.",
   },
   {
-    label: "Solve Problem",
+    labelKey: "aiTutor.solveProblem",
     icon: Calculator,
     prompt: "Help me solve this problem step by step:",
   },
   {
-    label: "Summarize Notes",
+    labelKey: "aiTutor.summarizeNotes",
     icon: FileText,
     prompt: "Summarize the key points from my notes on:",
   },
   {
-    label: "Study Tips",
+    labelKey: "aiTutor.studyTips",
     icon: Lightbulb,
     prompt: "Give me effective study strategies for retaining information in a technical subject.",
   },
@@ -72,6 +72,7 @@ type FileAttachment = {
 }
 
 export default function AITutorPage() {
+  const { t } = useI18n()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -81,12 +82,12 @@ export default function AITutorPage() {
     createConversation,
     getActiveConversation,
     addMessage,
-    updateMessage,
   } = useChatStore()
 
   const conversation = getActiveConversation()
   const [attachments, setAttachments] = useState<FileAttachment[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
+  const [inputValue, setInputValue] = useState("")
 
   // Initialize conversation if none exists
   useEffect(() => {
@@ -98,10 +99,7 @@ export default function AITutorPage() {
 
   const {
     messages,
-    input,
-    setInput,
-    handleInputChange,
-    handleSubmit,
+    append,
     isLoading,
     stop,
   } = useChat({
@@ -120,9 +118,6 @@ export default function AITutorPage() {
       }
     },
   })
-
-  // Ensure input is always a string (fallback for SSR)
-  const inputValue = input ?? ""
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -160,10 +155,12 @@ export default function AITutorPage() {
     })
   }
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputValue.trim() && attachments.length === 0) return
 
+    const messageContent = inputValue.trim()
+    
     // Add user message to store
     if (activeConversationId) {
       const attachmentInfo = attachments.length > 0
@@ -171,20 +168,24 @@ export default function AITutorPage() {
         : ""
       addMessage(activeConversationId, {
         role: "user",
-        content: inputValue + attachmentInfo,
+        content: messageContent + attachmentInfo,
         attachments: attachments.map(a => ({ name: a.name, type: a.type, url: a.url })),
       })
     }
 
-    // Clear attachments
+    // Clear input and attachments
+    setInputValue("")
     setAttachments([])
 
-    // Submit to AI
-    handleSubmit(e)
+    // Send to AI
+    await append({
+      role: "user",
+      content: messageContent,
+    })
   }
 
   const handlePromptClick = (prompt: string) => {
-    setInput(prompt)
+    setInputValue(prompt)
     textareaRef.current?.focus()
   }
 
@@ -208,19 +209,19 @@ export default function AITutorPage() {
             </div>
             <div>
               <h1 className="text-lg font-semibold flex items-center gap-2">
-                AI Tutor
+                {t("aiTutor.title")}
                 <Badge className="gap-1 bg-primary/10 text-primary border-primary/20 text-xs">
                   <Sparkles className="h-3 w-3" />
                   GPT-4
                 </Badge>
               </h1>
-              <p className="text-sm text-muted-foreground">Your academic copilot</p>
+              <p className="text-sm text-muted-foreground">{t("aiTutor.yourCopilot")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="gap-1">
               <Brain className="h-3 w-3" />
-              {messages.length} messages
+              {messages.length} {t("aiTutor.messages")}
             </Badge>
           </div>
         </div>
@@ -233,9 +234,9 @@ export default function AITutorPage() {
                 <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                   <Bot className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Welcome to AI Tutor</h2>
+                <h2 className="text-xl font-semibold mb-2">{t("aiTutor.welcome")}</h2>
                 <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                  I&apos;m your personal study assistant. Ask me anything about your coursework, and I&apos;ll help you learn effectively.
+                  {t("aiTutor.welcomeDesc")}
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
                   {suggestedPrompts.map((prompt, index) => (
@@ -245,14 +246,14 @@ export default function AITutorPage() {
                       onClick={() => handlePromptClick(prompt.prompt)}
                     >
                       <prompt.icon className="h-5 w-5 text-primary mb-2" />
-                      <p className="text-sm font-medium">{prompt.label}</p>
+                      <p className="text-sm font-medium">{t(prompt.labelKey)}</p>
                     </Card>
                   ))}
                 </div>
               </div>
             )}
 
-            {messages.map((message, index) => (
+            {messages.map((message) => (
               <div
                 key={message.id}
                 className={cn(
@@ -297,7 +298,7 @@ export default function AITutorPage() {
                 <div className="bg-muted/50 rounded-2xl px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-muted-foreground">Thinking...</span>
+                    <span className="text-sm text-muted-foreground">{t("aiTutor.thinking")}</span>
                   </div>
                 </div>
               </div>
@@ -343,9 +344,9 @@ export default function AITutorPage() {
               <Textarea
                 ref={textareaRef}
                 value={inputValue}
-                onChange={handleInputChange}
+                onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask me anything about your studies..."
+                placeholder={t("aiTutor.placeholder")}
                 className="min-h-[56px] max-h-[200px] resize-none rounded-2xl bg-muted/50 border-0 pr-24 focus-visible:ring-1 focus-visible:ring-primary"
                 rows={1}
               />
@@ -391,7 +392,7 @@ export default function AITutorPage() {
             </form>
 
             <p className="text-xs text-muted-foreground text-center mt-3">
-              Press Enter to send, Shift+Enter for new line
+              {t("aiTutor.enterToSend")}
             </p>
           </div>
         </div>

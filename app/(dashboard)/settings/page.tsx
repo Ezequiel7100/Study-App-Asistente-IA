@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Settings,
   User,
@@ -23,20 +24,13 @@ import {
   Camera,
   Mail,
   GraduationCap,
+  Languages,
+  Check,
 } from "lucide-react"
-
-const settingsSections = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "appearance", label: "Appearance", icon: Palette },
-  { id: "ai-settings", label: "AI Settings", icon: Bot },
-  { id: "calendar", label: "Calendar", icon: Calendar },
-  { id: "integrations", label: "Integrations", icon: Cloud },
-  { id: "privacy", label: "Privacy", icon: Shield },
-  { id: "billing", label: "Billing", icon: CreditCard },
-]
+import { useI18n, type Locale } from "@/lib/i18n"
 
 export default function SettingsPage() {
+  const { t, locale, setLocale } = useI18n()
   const [activeSection, setActiveSection] = useState("profile")
   const [notifications, setNotifications] = useState({
     email: true,
@@ -47,10 +41,22 @@ export default function SettingsPage() {
     aiSuggestions: true,
   })
 
+  const settingsSections = [
+    { id: "profile", label: t("common.profile"), icon: User },
+    { id: "notifications", label: t("settings.notifications"), icon: Bell },
+    { id: "appearance", label: t("settings.appearance"), icon: Palette },
+    { id: "language", label: t("settings.language"), icon: Languages },
+    { id: "ai-settings", label: t("nav.aiTutor"), icon: Bot },
+    { id: "calendar", label: t("nav.calendar"), icon: Calendar },
+    { id: "integrations", label: t("nav.driveSync"), icon: Cloud },
+    { id: "privacy", label: "Privacy", icon: Shield },
+    { id: "billing", label: "Billing", icon: CreditCard },
+  ]
+
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
         <p className="text-muted-foreground">Manage your account and preferences</p>
       </div>
 
@@ -79,7 +85,7 @@ export default function SettingsPage() {
               </button>
               <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-500/10 transition-all">
                 <LogOut className="h-4 w-4" />
-                Log Out
+                {t("common.logout")}
               </button>
             </nav>
           </CardContent>
@@ -91,7 +97,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5 text-primary" />
-                  Profile Settings
+                  {t("common.profile")}
                 </CardTitle>
                 <CardDescription>Manage your personal information</CardDescription>
               </CardHeader>
@@ -120,15 +126,15 @@ export default function SettingsPage() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstName">{t("auth.firstName")}</Label>
                     <Input id="firstName" defaultValue="Jane" className="rounded-xl" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastName">{t("auth.lastName")}</Label>
                     <Input id="lastName" defaultValue="Doe" className="rounded-xl" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("auth.email")}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input id="email" defaultValue="jane.doe@university.edu" className="rounded-xl pl-10" />
@@ -144,8 +150,73 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button className="rounded-xl">Save Changes</Button>
+                  <Button className="rounded-xl">{t("common.save")}</Button>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeSection === "language" && (
+            <Card className="rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Languages className="h-5 w-5 text-primary" />
+                  {t("settings.language")}
+                </CardTitle>
+                <CardDescription>Select your preferred language</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <button
+                    onClick={() => setLocale("en")}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl transition-all ${
+                      locale === "en" 
+                        ? "bg-primary/10 border-2 border-primary" 
+                        : "bg-muted/50 hover:bg-muted border-2 border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇺🇸</span>
+                      <div className="text-left">
+                        <p className="font-medium">{t("settings.english")}</p>
+                        <p className="text-sm text-muted-foreground">English (US)</p>
+                      </div>
+                    </div>
+                    {locale === "en" && (
+                      <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={() => setLocale("es")}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl transition-all ${
+                      locale === "es" 
+                        ? "bg-primary/10 border-2 border-primary" 
+                        : "bg-muted/50 hover:bg-muted border-2 border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇪🇸</span>
+                      <div className="text-left">
+                        <p className="font-medium">{t("settings.spanish")}</p>
+                        <p className="text-sm text-muted-foreground">Espanol</p>
+                      </div>
+                    </div>
+                    {locale === "es" && (
+                      <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                </div>
+                
+                <p className="text-sm text-muted-foreground">
+                  {locale === "es" 
+                    ? "El idioma se guardara automaticamente y se aplicara en toda la aplicacion."
+                    : "Language will be saved automatically and applied throughout the app."}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -155,7 +226,7 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Bell className="h-5 w-5 text-primary" />
-                  Notification Preferences
+                  {t("settings.notifications")}
                 </CardTitle>
                 <CardDescription>Configure how you receive notifications</CardDescription>
               </CardHeader>
@@ -226,7 +297,7 @@ export default function SettingsPage() {
             </Card>
           )}
 
-          {activeSection !== "profile" && activeSection !== "notifications" && (
+          {activeSection !== "profile" && activeSection !== "notifications" && activeSection !== "language" && (
             <Card className="rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm">
               <CardContent className="py-12 text-center">
                 <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

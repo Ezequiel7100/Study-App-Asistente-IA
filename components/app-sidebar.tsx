@@ -26,20 +26,22 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
-const navItems = [
-  { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { title: "Calendar", icon: Calendar, href: "/calendar" },
-  { title: "Subjects", icon: BookOpen, href: "/subjects" },
-  { title: "Tasks", icon: CheckSquare, href: "/tasks" },
-  { title: "AI Tutor", icon: Bot, href: "/ai-tutor" },
-  { title: "Analytics", icon: BarChart3, href: "/analytics" },
-  { title: "Drive Sync", icon: Cloud, href: "/drive-sync" },
-  { title: "Settings", icon: Settings, href: "/settings" },
-]
+import { useI18n } from "@/lib/i18n"
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { t } = useI18n()
+
+  const navItems = [
+    { titleKey: "nav.dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    { titleKey: "nav.calendar", icon: Calendar, href: "/calendar" },
+    { titleKey: "nav.subjects", icon: BookOpen, href: "/subjects" },
+    { titleKey: "nav.tasks", icon: CheckSquare, href: "/tasks" },
+    { titleKey: "nav.aiTutor", icon: Bot, href: "/ai-tutor" },
+    { titleKey: "nav.analytics", icon: BarChart3, href: "/analytics" },
+    { titleKey: "nav.driveSync", icon: Cloud, href: "/drive-sync" },
+    { titleKey: "nav.settings", icon: Settings, href: "/settings" },
+  ]
 
   return (
     <Sidebar className="border-r border-sidebar-border">
@@ -49,10 +51,10 @@ export function AppSidebar() {
             <GraduationCap className="h-5 w-5 text-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-semibold tracking-tight">StudySync</span>
+            <span className="text-lg font-semibold tracking-tight">{t("brand.name")}</span>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Sparkles className="h-3 w-3" />
-              AI-Powered
+              {t("brand.tagline")}
             </span>
           </div>
         </Link>
@@ -64,7 +66,7 @@ export function AppSidebar() {
               {navItems.map((item) => {
                 const isActive = pathname === item.href
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.titleKey}>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
@@ -72,7 +74,7 @@ export function AppSidebar() {
                     >
                       <Link href={item.href} className="flex items-center gap-3">
                         <item.icon className="h-5 w-5" />
-                        <span className="font-medium">{item.title}</span>
+                        <span className="font-medium">{t(item.titleKey)}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
