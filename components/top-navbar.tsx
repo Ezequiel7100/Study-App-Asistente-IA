@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Search, Bell, Sparkles, Sun, Moon, User, Settings, LogOut, BookOpen, CheckSquare, Calendar } from "lucide-react"
@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "next-themes"
+import { createClient } from "@/lib/supabase/client"
+import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 const notifications = [
   { id: 1, title: "Assignment Due", description: "CS201 Problem Set due in 2 hours", time: "2h", unread: true },
@@ -36,12 +38,45 @@ export function TopNavbar() {
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createClient()
+    
+    // Get initial user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      setIsLoading(false)
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/auth/login")
+  }
 
   const unreadCount = notifications.filter(n => n.unread).length
 
   const filteredResults = searchQuery
     ? searchResults.filter(r => r.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : []
+
+  const userInitials = user?.user_metadata?.first_name && user?.user_metadata?.last_name
+    ? `${user.user_metadata.first_name[0]}${user.user_metadata.last_name[0]}`.toUpperCase()
+    : user?.email?.[0].toUpperCase() ?? "U"
+
+  const userName = user?.user_metadata?.first_name && user?.user_metadata?.last_name
+    ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
+    : user?.email?.split("@")[0] ?? "User"
 
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-6">
@@ -142,16 +177,16 @@ export function TopNavbar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-10 w-10 rounded-xl p-0">
               <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarImage src={user?.user_metadata?.avatar_url} />
+                <AvatarFallback>{isLoading ? "..." : userInitials}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 rounded-xl">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span>Jane Doe</span>
-                <span className="text-xs font-normal text-muted-foreground">jane.doe@university.edu</span>
+                <span>{userName}</span>
+                <span className="text-xs font-normal text-muted-foreground">{user?.email}</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -168,7 +203,10 @@ export function TopNavbar() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-rose-500 cursor-pointer">
+            <DropdownMenuItem 
+              className="text-rose-500 cursor-pointer"
+              onClick={handleLogout}
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Log out
             </DropdownMenuItem>
