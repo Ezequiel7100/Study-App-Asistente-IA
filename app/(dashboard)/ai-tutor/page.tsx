@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useChat } from "@ai-sdk/react"
+import { DefaultChatTransport } from "ai"
 import { useChatStore } from "@/lib/chat-store"
 import { ChatSidebar } from "@/components/chat/chat-sidebar"
 import { MarkdownRenderer } from "@/components/chat/markdown-renderer"
@@ -71,6 +72,15 @@ type FileAttachment = {
   file: File
 }
 
+// Helper to extract text from UIMessage parts
+function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
+  if (!message.parts || !Array.isArray(message.parts)) return ""
+  return message.parts
+    .filter((p): p is { type: "text"; text: string } => p.type === "text" && typeof p.text === "string")
+    .map((p) => p.text)
+    .join("")
+}
+
 export default function AITutorPage() {
   const { t } = useI18n()
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -99,25 +109,14 @@ export default function AITutorPage() {
 
   const {
     messages,
-    append,
-    isLoading,
+    sendMessage,
+    status,
     stop,
   } = useChat({
-    api: "/api/chat",
-    initialMessages: conversation?.messages.map((m) => ({
-      id: m.id,
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })) || [],
-    onFinish: (message) => {
-      if (activeConversationId) {
-        addMessage(activeConversationId, {
-          role: "assistant",
-          content: message.content,
-        })
-      }
-    },
+    transport: new DefaultChatTransport({ api: "/api/chat" }),
   })
+
+  const isLoading = status === "streaming" || status === "submitted"
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -158,6 +157,7 @@ export default function AITutorPage() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputValue.trim() && attachments.length === 0) return
+    if (isLoading) return
 
     const messageContent = inputValue.trim()
     
@@ -177,11 +177,8 @@ export default function AITutorPage() {
     setInputValue("")
     setAttachments([])
 
-    // Send to AI
-    await append({
-      role: "user",
-      content: messageContent,
-    })
+    // Send to AI using sendMessage (AI SDK 6 pattern)
+    sendMessage({ text: messageContent })
   }
 
   const handlePromptClick = (prompt: string) => {
@@ -253,42 +250,45 @@ export default function AITutorPage() {
               </div>
             )}
 
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-4",
-                  message.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
-                {message.role === "assistant" && (
-                  <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                )}
+            {messages.map((message) => {
+              const messageText = getMessageText(message)
+              return (
                 <div
+                  key={message.id}
                   className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-3",
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/50"
+                    "flex gap-4",
+                    message.role === "user" ? "justify-end" : "justify-start"
                   )}
                 >
-                  {message.role === "assistant" ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <MarkdownRenderer content={message.content} />
+                  {message.role === "assistant" && (
+                    <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+                      <Bot className="h-5 w-5 text-primary-foreground" />
                     </div>
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  )}
+                  <div
+                    className={cn(
+                      "max-w-[80%] rounded-2xl px-4 py-3",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted/50"
+                    )}
+                  >
+                    {message.role === "assistant" ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <MarkdownRenderer content={messageText} />
+                      </div>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap">{messageText}</p>
+                    )}
+                  </div>
+                  {message.role === "user" && (
+                    <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                      <User className="h-5 w-5" />
+                    </div>
                   )}
                 </div>
-                {message.role === "user" && (
-                  <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                    <User className="h-5 w-5" />
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
 
             {isLoading && (
               <div className="flex gap-4">

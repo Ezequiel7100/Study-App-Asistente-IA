@@ -1,5 +1,9 @@
-import { openai } from "@ai-sdk/openai"
-import { streamText } from "ai"
+import {
+  consumeStream,
+  convertToModelMessages,
+  streamText,
+  UIMessage,
+} from "ai"
 
 export const maxDuration = 30
 
@@ -27,13 +31,17 @@ When responding:
 Remember: You're here to help students learn effectively, not just provide answers. Guide them to understand concepts deeply.`
 
 export async function POST(req: Request) {
-  const { messages } = await req.json()
+  const { messages }: { messages: UIMessage[] } = await req.json()
 
   const result = streamText({
-    model: openai("gpt-4o-mini"),
+    model: "openai/gpt-4o-mini",
     system: SYSTEM_PROMPT,
-    messages,
+    messages: await convertToModelMessages(messages),
+    abortSignal: req.signal,
   })
 
-  return result.toDataStreamResponse()
+  return result.toUIMessageStreamResponse({
+    originalMessages: messages,
+    consumeSseStream: consumeStream,
+  })
 }

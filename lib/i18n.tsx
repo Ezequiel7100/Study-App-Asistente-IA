@@ -287,8 +287,12 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined)
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>("en")
+  const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
+    // Mark as hydrated
+    setIsHydrated(true)
+    
     // Load from localStorage on mount
     const savedLocale = localStorage.getItem("studysync-locale") as Locale
     if (savedLocale && (savedLocale === "en" || savedLocale === "es")) {
@@ -298,6 +302,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       const browserLang = navigator.language.toLowerCase()
       if (browserLang.startsWith("es")) {
         setLocale("es")
+        localStorage.setItem("studysync-locale", "es")
       }
     }
   }, [])
@@ -307,12 +312,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("studysync-locale", newLocale)
   }
 
+  // Use English on server and first render, then switch to saved locale
+  const effectiveLocale = isHydrated ? locale : "en"
+  
   const t = (key: string): string => {
-    return translations[locale][key] || key
+    return translations[effectiveLocale][key] || key
   }
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale: handleSetLocale, t }}>
+    <I18nContext.Provider value={{ locale: effectiveLocale, setLocale: handleSetLocale, t }}>
       {children}
     </I18nContext.Provider>
   )
