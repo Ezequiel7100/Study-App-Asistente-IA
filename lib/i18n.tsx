@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 
-export type Locale = "en" | "es"
+export type Locale = "en" | "es" | "pt"
 
 type Translations = {
   [key: string]: string
@@ -127,6 +127,7 @@ const translations: Record<Locale, Translations> = {
     "settings.language": "Language",
     "settings.english": "English",
     "settings.spanish": "Spanish",
+    "settings.portuguese": "Portuguese",
     
     // Branding
     "brand.name": "StudySync",
@@ -258,8 +259,9 @@ const translations: Record<Locale, Translations> = {
     "settings.appearance": "Apariencia",
     "settings.notifications": "Notificaciones",
     "settings.language": "Idioma",
-    "settings.english": "Inglés",
-    "settings.spanish": "Español",
+    "settings.english": "Ingles",
+    "settings.spanish": "Espanol",
+    "settings.portuguese": "Portugues",
     
     // Branding
     "brand.name": "StudySync",
@@ -274,6 +276,140 @@ const translations: Record<Locale, Translations> = {
     "features.progressTracking": "Seguimiento de progreso y análisis",
     "features.interactiveAI": "Tutor de IA interactivo",
     "features.freeStart": "Gratis para comenzar - sin tarjeta de crédito",
+  },
+  pt: {
+    // Common
+    "common.loading": "Carregando...",
+    "common.save": "Salvar",
+    "common.cancel": "Cancelar",
+    "common.delete": "Excluir",
+    "common.edit": "Editar",
+    "common.create": "Criar",
+    "common.search": "Buscar",
+    "common.settings": "Configurações",
+    "common.logout": "Sair",
+    "common.profile": "Perfil",
+    
+    // Auth
+    "auth.login": "Entrar",
+    "auth.signup": "Cadastrar",
+    "auth.email": "E-mail",
+    "auth.password": "Senha",
+    "auth.confirmPassword": "Confirmar senha",
+    "auth.firstName": "Nome",
+    "auth.lastName": "Sobrenome",
+    "auth.welcomeBack": "Bem-vindo de volta",
+    "auth.createAccount": "Criar uma conta",
+    "auth.enterCredentials": "Digite suas credenciais para acessar sua conta",
+    "auth.enterDetails": "Digite seus dados para começar",
+    "auth.noAccount": "Não tem uma conta?",
+    "auth.hasAccount": "Já tem uma conta?",
+    "auth.signingIn": "Entrando...",
+    "auth.creatingAccount": "Criando conta...",
+    "auth.continueWithGoogle": "Continuar com Google",
+    "auth.orContinueWith": "Ou continuar com",
+    "auth.passwordMismatch": "As senhas não coincidem",
+    "auth.passwordTooShort": "A senha deve ter pelo menos 6 caracteres",
+    "auth.checkEmail": "Verifique seu e-mail",
+    "auth.confirmationSent": "Enviamos um e-mail de confirmação. Verifique sua caixa de entrada e clique no link para verificar sua conta.",
+    "auth.backToLogin": "Voltar ao login",
+    
+    // Navigation
+    "nav.dashboard": "Painel",
+    "nav.calendar": "Calendário",
+    "nav.subjects": "Matérias",
+    "nav.tasks": "Tarefas",
+    "nav.aiTutor": "Tutor IA",
+    "nav.analytics": "Análises",
+    "nav.driveSync": "Sincronização",
+    "nav.settings": "Configurações",
+    "nav.askAI": "Perguntar à IA",
+    
+    // Dashboard
+    "dashboard.title": "Painel",
+    "dashboard.weeklyStudyHours": "Horas de Estudo Semanais",
+    "dashboard.upcomingExams": "Próximas Provas",
+    "dashboard.pendingTasks": "Tarefas Pendentes",
+    "dashboard.productivityScore": "Pontuação de Produtividade",
+    "dashboard.aiRecommendations": "Recomendações de IA",
+    "dashboard.yourAcademicCopilot": "Seu Copiloto Acadêmico",
+    
+    // AI Tutor
+    "aiTutor.title": "Tutor IA",
+    "aiTutor.yourCopilot": "Seu copiloto acadêmico",
+    "aiTutor.welcome": "Bem-vindo ao Tutor IA",
+    "aiTutor.welcomeDesc": "Sou seu assistente de estudos pessoal. Pergunte-me qualquer coisa sobre seus cursos e vou ajudá-lo a aprender efetivamente.",
+    "aiTutor.placeholder": "Pergunte-me qualquer coisa sobre seus estudos...",
+    "aiTutor.enterToSend": "Pressione Enter para enviar, Shift+Enter para nova linha",
+    "aiTutor.messages": "mensagens",
+    "aiTutor.thinking": "Pensando...",
+    "aiTutor.buildStudyPlan": "Criar Plano de Estudos",
+    "aiTutor.explainTopic": "Explicar Tópico",
+    "aiTutor.quizMe": "Faça um Quiz",
+    "aiTutor.solveProblem": "Resolver Problema",
+    "aiTutor.summarizeNotes": "Resumir Anotações",
+    "aiTutor.studyTips": "Dicas de Estudo",
+    
+    // Calendar
+    "calendar.title": "Calendário",
+    "calendar.today": "Hoje",
+    "calendar.week": "Semana",
+    "calendar.month": "Mês",
+    "calendar.day": "Dia",
+    "calendar.addEvent": "Adicionar Evento",
+    
+    // Subjects
+    "subjects.title": "Matérias",
+    "subjects.addSubject": "Adicionar Matéria",
+    "subjects.activeSubjects": "Matérias Ativas",
+    "subjects.archivedSubjects": "Matérias Arquivadas",
+    
+    // Tasks
+    "tasks.title": "Tarefas",
+    "tasks.addTask": "Adicionar Tarefa",
+    "tasks.allTasks": "Todas as Tarefas",
+    "tasks.completed": "Concluídas",
+    "tasks.pending": "Pendentes",
+    "tasks.highPriority": "Alta Prioridade",
+    
+    // Drive Sync
+    "driveSync.title": "Sincronização",
+    "driveSync.connectManage": "Conecte e gerencie seu armazenamento em nuvem",
+    "driveSync.syncNow": "Sincronizar",
+    "driveSync.syncing": "Sincronizando...",
+    "driveSync.connected": "Conectado",
+    "driveSync.notConnected": "Não conectado",
+    "driveSync.connect": "Conectar",
+    "driveSync.recentFiles": "Arquivos Recentes",
+    "driveSync.storageOverview": "Visão Geral do Armazenamento",
+    "driveSync.quickActions": "Ações Rápidas",
+    "driveSync.uploadFiles": "Enviar Arquivos",
+    "driveSync.createFolder": "Criar Pasta",
+    "driveSync.shareFiles": "Compartilhar Arquivos",
+    
+    // Settings
+    "settings.title": "Configurações",
+    "settings.account": "Conta",
+    "settings.appearance": "Aparência",
+    "settings.notifications": "Notificações",
+    "settings.language": "Idioma",
+    "settings.english": "Inglês",
+    "settings.spanish": "Espanhol",
+    "settings.portuguese": "Português",
+    
+    // Branding
+    "brand.name": "StudySync",
+    "brand.tagline": "Com IA",
+    "brand.fullName": "StudySync AI",
+    "brand.academicCopilot": "Seu Copiloto Acadêmico com IA",
+    "brand.description": "Organize seus estudos, acompanhe seu progresso e obtenha recomendações personalizadas de IA para ajudá-lo a ter sucesso.",
+    
+    // Features
+    "features.aiRecommendations": "Recomendações de estudo com IA",
+    "features.smartCalendar": "Calendário inteligente com agendamento",
+    "features.progressTracking": "Acompanhamento de progresso e análises",
+    "features.interactiveAI": "Tutor de IA interativo",
+    "features.freeStart": "Grátis para começar - sem cartão de crédito",
   },
 }
 
@@ -295,7 +431,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     
     // Load from localStorage on mount
     const savedLocale = localStorage.getItem("studysync-locale") as Locale
-    if (savedLocale && (savedLocale === "en" || savedLocale === "es")) {
+    if (savedLocale && (savedLocale === "en" || savedLocale === "es" || savedLocale === "pt")) {
       setLocale(savedLocale)
     } else {
       // Detect browser language

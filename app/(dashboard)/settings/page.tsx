@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,10 +28,25 @@ import {
   Check,
 } from "lucide-react"
 import { useI18n, type Locale } from "@/lib/i18n"
+import { useProfileStore } from "@/lib/profile-store"
 
 export default function SettingsPage() {
   const { t, locale, setLocale } = useI18n()
+  const { profile, fetchProfile, updateLanguage, isLoading: profileLoading } = useProfileStore()
   const [activeSection, setActiveSection] = useState("profile")
+
+  // Fetch profile on mount
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile])
+
+  // Handle language change with Supabase persistence
+  const handleLanguageChange = async (newLocale: Locale) => {
+    setLocale(newLocale)
+    if (profile) {
+      await updateLanguage(newLocale)
+    }
+  }
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
@@ -163,17 +178,20 @@ export default function SettingsPage() {
                   <Languages className="h-5 w-5 text-primary" />
                   {t("settings.language")}
                 </CardTitle>
-                <CardDescription>Select your preferred language</CardDescription>
+                <CardDescription>
+                  {locale === "es" ? "Selecciona tu idioma preferido" : locale === "pt" ? "Selecione seu idioma preferido" : "Select your preferred language"}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <button
-                    onClick={() => setLocale("en")}
+                    onClick={() => handleLanguageChange("en")}
+                    disabled={profileLoading}
                     className={`w-full flex items-center justify-between p-4 rounded-xl transition-all ${
                       locale === "en" 
                         ? "bg-primary/10 border-2 border-primary" 
                         : "bg-muted/50 hover:bg-muted border-2 border-transparent"
-                    }`}
+                    } ${profileLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">🇺🇸</span>
@@ -190,12 +208,13 @@ export default function SettingsPage() {
                   </button>
                   
                   <button
-                    onClick={() => setLocale("es")}
+                    onClick={() => handleLanguageChange("es")}
+                    disabled={profileLoading}
                     className={`w-full flex items-center justify-between p-4 rounded-xl transition-all ${
                       locale === "es" 
                         ? "bg-primary/10 border-2 border-primary" 
                         : "bg-muted/50 hover:bg-muted border-2 border-transparent"
-                    }`}
+                    } ${profileLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">🇪🇸</span>
@@ -210,11 +229,36 @@ export default function SettingsPage() {
                       </div>
                     )}
                   </button>
+                  
+                  <button
+                    onClick={() => handleLanguageChange("pt")}
+                    disabled={profileLoading}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl transition-all ${
+                      locale === "pt" 
+                        ? "bg-primary/10 border-2 border-primary" 
+                        : "bg-muted/50 hover:bg-muted border-2 border-transparent"
+                    } ${profileLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇧🇷</span>
+                      <div className="text-left">
+                        <p className="font-medium">{locale === "pt" ? "Portugues" : locale === "es" ? "Portugues" : "Portuguese"}</p>
+                        <p className="text-sm text-muted-foreground">Portugues (Brasil)</p>
+                      </div>
+                    </div>
+                    {locale === "pt" && (
+                      <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
                 </div>
                 
                 <p className="text-sm text-muted-foreground">
                   {locale === "es" 
                     ? "El idioma se guardara automaticamente y se aplicara en toda la aplicacion."
+                    : locale === "pt"
+                    ? "O idioma sera salvo automaticamente e aplicado em todo o aplicativo."
                     : "Language will be saved automatically and applied throughout the app."}
                 </p>
               </CardContent>
