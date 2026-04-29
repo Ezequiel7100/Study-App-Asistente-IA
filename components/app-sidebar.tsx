@@ -27,10 +27,12 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useI18n } from "@/lib/i18n"
+import { useProfileStore } from "@/lib/profile-store"
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const { profile } = useProfileStore()
 
   const navItems = [
     { titleKey: "nav.dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -90,12 +92,20 @@ export function AppSidebar() {
           className="flex items-center gap-3 rounded-xl bg-sidebar-accent/50 p-3 transition-colors hover:bg-sidebar-accent"
         >
           <Avatar className="h-9 w-9">
-            <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face" />
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarImage src={profile?.avatar_url || undefined} />
+            <AvatarFallback>
+              {profile?.first_name?.charAt(0) || "U"}{profile?.last_name?.charAt(0) || ""}
+            </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-medium">Jane Doe</span>
-            <span className="text-xs text-muted-foreground">Computer Science</span>
+            <span className="text-sm font-medium">
+              {profile?.first_name && profile?.last_name 
+                ? `${profile.first_name} ${profile.last_name}`
+                : profile?.first_name || (locale === "es" ? "Usuario" : locale === "pt" ? "Usuario" : "User")}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {profile?.career || (locale === "es" ? "Estudiante" : locale === "pt" ? "Estudante" : "Student")}
+            </span>
           </div>
         </Link>
       </SidebarFooter>

@@ -30,6 +30,7 @@ import { useTasksStore, Task, ViewMode } from "@/lib/tasks-store"
 import { useSubjectsStore } from "@/lib/subjects-store"
 import { TaskModal } from "@/components/tasks/task-modal"
 import { KanbanBoard } from "@/components/tasks/kanban-board"
+import { useI18n } from "@/lib/i18n"
 
 const priorityColors = {
   high: "bg-rose-500/10 text-rose-500 border-rose-500/20",
@@ -38,6 +39,7 @@ const priorityColors = {
 }
 
 export default function TasksPage() {
+  const { t, locale } = useI18n()
   const {
     tasks,
     viewMode,
@@ -154,8 +156,10 @@ export default function TasksPage() {
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Tasks</h1>
-          <p className="text-muted-foreground">Manage your assignments and deadlines</p>
+          <h1 className="text-2xl font-bold">{t("tasks.title")}</h1>
+          <p className="text-muted-foreground">
+            {locale === "es" ? "Administra tus tareas y fechas limite" : locale === "pt" ? "Gerencie suas tarefas e prazos" : "Manage your assignments and deadlines"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -165,11 +169,11 @@ export default function TasksPage() {
             disabled={aiLoading}
           >
             <Sparkles className={`h-4 w-4 ${aiLoading ? "animate-spin" : ""}`} />
-            AI Prioritize
+            {locale === "es" ? "Priorizar con IA" : locale === "pt" ? "Priorizar com IA" : "AI Prioritize"}
           </Button>
           <Button onClick={handleAddTask} className="gap-2 rounded-xl">
             <Plus className="h-4 w-4" />
-            Add Task
+            {t("tasks.addTask")}
           </Button>
         </div>
       </div>
@@ -183,10 +187,14 @@ export default function TasksPage() {
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium">AI Recommendation</p>
+                <p className="text-sm font-medium">{locale === "es" ? "Recomendacion de IA" : locale === "pt" ? "Recomendacao de IA" : "AI Recommendation"}</p>
                 <p className="text-sm text-muted-foreground">
-                  Focus on <span className="font-semibold text-foreground">{`"${topRecommendation.title}"`}</span> first
-                  - Priority score: {topRecommendation.aiScore}
+                  {locale === "es" 
+                    ? <>Enfocate en <span className="font-semibold text-foreground">{`"${topRecommendation.title}"`}</span> primero - Puntuacion: {topRecommendation.aiScore}</>
+                    : locale === "pt"
+                    ? <>Foque em <span className="font-semibold text-foreground">{`"${topRecommendation.title}"`}</span> primeiro - Pontuacao: {topRecommendation.aiScore}</>
+                    : <>Focus on <span className="font-semibold text-foreground">{`"${topRecommendation.title}"`}</span> first - Priority score: {topRecommendation.aiScore}</>
+                  }
                 </p>
               </div>
               <Button
@@ -195,7 +203,7 @@ export default function TasksPage() {
                 className="rounded-lg"
                 onClick={() => handleEditTask(topRecommendation)}
               >
-                View Task
+                {locale === "es" ? "Ver Tarea" : locale === "pt" ? "Ver Tarefa" : "View Task"}
               </Button>
             </div>
           </CardContent>
@@ -212,7 +220,7 @@ export default function TasksPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total Tasks</p>
+                <p className="text-xs text-muted-foreground">{locale === "es" ? "Total de Tareas" : locale === "pt" ? "Total de Tarefas" : "Total Tasks"}</p>
               </div>
             </div>
           </CardContent>
@@ -225,7 +233,7 @@ export default function TasksPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.completed}</p>
-                <p className="text-xs text-muted-foreground">Completed</p>
+                <p className="text-xs text-muted-foreground">{t("tasks.completed")}</p>
               </div>
             </div>
           </CardContent>
@@ -238,7 +246,7 @@ export default function TasksPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.pending}</p>
-                <p className="text-xs text-muted-foreground">Pending</p>
+                <p className="text-xs text-muted-foreground">{t("tasks.pending")}</p>
               </div>
             </div>
           </CardContent>
@@ -251,7 +259,7 @@ export default function TasksPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.highPriority}</p>
-                <p className="text-xs text-muted-foreground">High Priority</p>
+                <p className="text-xs text-muted-foreground">{t("tasks.highPriority")}</p>
               </div>
             </div>
           </CardContent>
@@ -262,12 +270,12 @@ export default function TasksPage() {
       <Card className="rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm">
         <CardContent className="py-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Overall Progress</span>
+            <span className="text-sm font-medium">{locale === "es" ? "Progreso General" : locale === "pt" ? "Progresso Geral" : "Overall Progress"}</span>
             <span className="text-sm text-muted-foreground">
-              {stats.completed} / {stats.total} tasks completed
+              {stats.completed} / {stats.total} {locale === "es" ? "tareas completadas" : locale === "pt" ? "tarefas concluidas" : "tasks completed"}
             </span>
           </div>
-          <Progress value={(stats.completed / stats.total) * 100} className="h-2" />
+          <Progress value={stats.total > 0 ? (stats.completed / stats.total) * 100 : 0} className="h-2" />
         </CardContent>
       </Card>
 
@@ -277,7 +285,7 @@ export default function TasksPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search tasks..."
+              placeholder={locale === "es" ? "Buscar tareas..." : locale === "pt" ? "Buscar tarefas..." : "Search tasks..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 w-[200px] rounded-xl"
@@ -286,22 +294,22 @@ export default function TasksPage() {
 
           <Select value={filterPriority} onValueChange={(v) => setFilterPriority(v as typeof filterPriority)}>
             <SelectTrigger className="w-[130px] rounded-xl">
-              <SelectValue placeholder="Priority" />
+              <SelectValue placeholder={locale === "es" ? "Prioridad" : locale === "pt" ? "Prioridade" : "Priority"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="all">{locale === "es" ? "Todas las prioridades" : locale === "pt" ? "Todas as prioridades" : "All Priorities"}</SelectItem>
+              <SelectItem value="high">{locale === "es" ? "Alta" : locale === "pt" ? "Alta" : "High"}</SelectItem>
+              <SelectItem value="medium">{locale === "es" ? "Media" : locale === "pt" ? "Media" : "Medium"}</SelectItem>
+              <SelectItem value="low">{locale === "es" ? "Baja" : locale === "pt" ? "Baixa" : "Low"}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={filterSubject || "all"} onValueChange={(v) => setFilterSubject(v === "all" ? null : v)}>
             <SelectTrigger className="w-[150px] rounded-xl">
-              <SelectValue placeholder="Subject" />
+              <SelectValue placeholder={locale === "es" ? "Materia" : locale === "pt" ? "Materia" : "Subject"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Subjects</SelectItem>
+              <SelectItem value="all">{locale === "es" ? "Todas las materias" : locale === "pt" ? "Todas as materias" : "All Subjects"}</SelectItem>
               {subjects
                 .filter((s) => !s.archived)
                 .map((subject) => (
@@ -318,10 +326,10 @@ export default function TasksPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="dueDate">Due Date</SelectItem>
-              <SelectItem value="priority">Priority</SelectItem>
-              <SelectItem value="subject">Subject</SelectItem>
-              <SelectItem value="aiScore">AI Score</SelectItem>
+              <SelectItem value="dueDate">{locale === "es" ? "Fecha limite" : locale === "pt" ? "Data limite" : "Due Date"}</SelectItem>
+              <SelectItem value="priority">{locale === "es" ? "Prioridad" : locale === "pt" ? "Prioridade" : "Priority"}</SelectItem>
+              <SelectItem value="subject">{locale === "es" ? "Materia" : locale === "pt" ? "Materia" : "Subject"}</SelectItem>
+              <SelectItem value="aiScore">{locale === "es" ? "Puntuacion IA" : locale === "pt" ? "Pontuacao IA" : "AI Score"}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -406,10 +414,10 @@ export default function TasksPage() {
               {filteredTasks.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <ListTodo className="h-12 w-12 mb-4" />
-                  <p>No tasks found</p>
+                  <p>{locale === "es" ? "No se encontraron tareas" : locale === "pt" ? "Nenhuma tarefa encontrada" : "No tasks found"}</p>
                   <Button onClick={handleAddTask} variant="outline" className="mt-4 rounded-xl">
                     <Plus className="h-4 w-4 mr-2" />
-                    Add a task
+                    {locale === "es" ? "Agregar una tarea" : locale === "pt" ? "Adicionar uma tarefa" : "Add a task"}
                   </Button>
                 </div>
               )}

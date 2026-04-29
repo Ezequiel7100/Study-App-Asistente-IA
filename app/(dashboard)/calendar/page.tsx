@@ -42,8 +42,10 @@ import {
   parseISO,
   differenceInMinutes,
 } from "date-fns"
+import { useI18n } from "@/lib/i18n"
 
 export default function CalendarPage() {
+  const { t, locale } = useI18n()
   const {
     events,
     selectedDate,
@@ -184,14 +186,14 @@ export default function CalendarPage() {
       <div className="container max-w-7xl mx-auto p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Calendar</h1>
+            <h1 className="text-2xl font-bold">{t("calendar.title")}</h1>
             <p className="text-muted-foreground">
-              Manage your schedule and deadlines
+              {locale === "es" ? "Administra tu horario y fechas limite" : locale === "pt" ? "Gerencie sua agenda e prazos" : "Manage your schedule and deadlines"}
             </p>
           </div>
           <Button onClick={handleQuickAdd} className="gap-2 rounded-xl">
             <Plus className="h-4 w-4" />
-            Add Event
+            {t("calendar.addEvent")}
           </Button>
         </div>
 
@@ -218,7 +220,7 @@ export default function CalendarPage() {
                     className="h-8 rounded-lg px-3"
                     onClick={goToToday}
                   >
-                    Today
+                    {t("calendar.today")}
                   </Button>
                   <Button
                     variant="outline"
@@ -237,13 +239,13 @@ export default function CalendarPage() {
               >
                 <TabsList className="rounded-xl">
                   <TabsTrigger value="month" className="rounded-lg">
-                    Month
+                    {t("calendar.month")}
                   </TabsTrigger>
                   <TabsTrigger value="week" className="rounded-lg">
-                    Week
+                    {t("calendar.week")}
                   </TabsTrigger>
                   <TabsTrigger value="day" className="rounded-lg">
-                    Day
+                    {t("calendar.day")}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

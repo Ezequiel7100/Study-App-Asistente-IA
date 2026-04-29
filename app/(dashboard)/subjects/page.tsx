@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import { useSubjectsStore, Subject } from "@/lib/subjects-store"
 import { SubjectModal } from "@/components/subjects/subject-modal"
+import { useI18n } from "@/lib/i18n"
 
 const difficultyColors = {
   easy: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
@@ -39,6 +40,7 @@ const difficultyColors = {
 }
 
 export default function SubjectsPage() {
+  const { t, locale } = useI18n()
   const {
     subjects,
     showArchived,
@@ -89,23 +91,25 @@ export default function SubjectsPage() {
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Subjects</h1>
-          <p className="text-muted-foreground">Track your courses and study progress</p>
+          <h1 className="text-2xl font-bold">{t("subjects.title")}</h1>
+          <p className="text-muted-foreground">
+            {locale === "es" ? "Rastrea tus cursos y progreso de estudio" : locale === "pt" ? "Acompanhe seus cursos e progresso de estudo" : "Track your courses and study progress"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Tabs value={showArchived ? "archived" : "active"} className="w-auto">
             <TabsList className="rounded-xl">
               <TabsTrigger value="active" className="rounded-lg" onClick={() => showArchived && toggleShowArchived()}>
-                Active
+                {locale === "es" ? "Activas" : locale === "pt" ? "Ativas" : "Active"}
               </TabsTrigger>
               <TabsTrigger value="archived" className="rounded-lg" onClick={() => !showArchived && toggleShowArchived()}>
-                Archived
+                {locale === "es" ? "Archivadas" : locale === "pt" ? "Arquivadas" : "Archived"}
               </TabsTrigger>
             </TabsList>
           </Tabs>
           <Button onClick={handleAddSubject} className="gap-2 rounded-xl">
             <Plus className="h-4 w-4" />
-            Add Subject
+            {t("subjects.addSubject")}
           </Button>
         </div>
       </div>
@@ -114,7 +118,7 @@ export default function SubjectsPage() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search subjects..."
+          placeholder={locale === "es" ? "Buscar materias..." : locale === "pt" ? "Buscar materias..." : "Search subjects..."}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 rounded-xl"
@@ -151,17 +155,17 @@ export default function SubjectsPage() {
                   <DropdownMenuContent align="end" className="rounded-xl">
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditSubject(subject); }}>
                       <Pencil className="h-4 w-4 mr-2" />
-                      Edit
+                      {t("common.edit")}
                     </DropdownMenuItem>
                     {subject.archived ? (
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); restoreSubject(subject.id); }}>
                         <ArchiveRestore className="h-4 w-4 mr-2" />
-                        Restore
+                        {locale === "es" ? "Restaurar" : locale === "pt" ? "Restaurar" : "Restore"}
                       </DropdownMenuItem>
                     ) : (
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); archiveSubject(subject.id); }}>
                         <Archive className="h-4 w-4 mr-2" />
-                        Archive
+                        {locale === "es" ? "Archivar" : locale === "pt" ? "Arquivar" : "Archive"}
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
@@ -170,7 +174,7 @@ export default function SubjectsPage() {
                       onClick={(e) => { e.stopPropagation(); deleteSubject(subject.id); }}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      {t("common.delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -241,12 +245,16 @@ export default function SubjectsPage() {
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground text-center">
-                  {searchQuery ? "No subjects match your search" : showArchived ? "No archived subjects" : "No subjects yet"}
+                  {searchQuery 
+                    ? (locale === "es" ? "No hay materias que coincidan con tu busqueda" : locale === "pt" ? "Nenhuma materia corresponde a sua busca" : "No subjects match your search")
+                    : showArchived 
+                    ? (locale === "es" ? "No hay materias archivadas" : locale === "pt" ? "Nenhuma materia arquivada" : "No archived subjects")
+                    : (locale === "es" ? "Aun no hay materias" : locale === "pt" ? "Ainda nao ha materias" : "No subjects yet")}
                 </p>
                 {!searchQuery && !showArchived && (
                   <Button onClick={handleAddSubject} variant="outline" className="mt-4 rounded-xl">
                     <Plus className="h-4 w-4 mr-2" />
-                    Add your first subject
+                    {locale === "es" ? "Agregar tu primera materia" : locale === "pt" ? "Adicionar sua primeira materia" : "Add your first subject"}
                   </Button>
                 )}
               </CardContent>
@@ -260,26 +268,26 @@ export default function SubjectsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            Overall Performance
+            {locale === "es" ? "Rendimiento General" : locale === "pt" ? "Desempenho Geral" : "Overall Performance"}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div className="text-center">
               <p className="text-3xl font-bold text-primary">{avgGpa.toFixed(2)}</p>
-              <p className="text-sm text-muted-foreground">Current GPA</p>
+              <p className="text-sm text-muted-foreground">{locale === "es" ? "GPA Actual" : locale === "pt" ? "GPA Atual" : "Current GPA"}</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold">{activeSubjects.length}</p>
-              <p className="text-sm text-muted-foreground">Active Courses</p>
+              <p className="text-sm text-muted-foreground">{locale === "es" ? "Cursos Activos" : locale === "pt" ? "Cursos Ativos" : "Active Courses"}</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold">{totalHoursStudied}</p>
-              <p className="text-sm text-muted-foreground">Hours Studied</p>
+              <p className="text-sm text-muted-foreground">{locale === "es" ? "Horas Estudiadas" : locale === "pt" ? "Horas Estudadas" : "Hours Studied"}</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold">{totalCredits}</p>
-              <p className="text-sm text-muted-foreground">Total Credits</p>
+              <p className="text-sm text-muted-foreground">{locale === "es" ? "Creditos Totales" : locale === "pt" ? "Creditos Totais" : "Total Credits"}</p>
             </div>
           </div>
         </CardContent>

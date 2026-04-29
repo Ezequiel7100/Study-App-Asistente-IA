@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { useDashboardStore } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
+import { useI18n } from "@/lib/i18n"
 
 function StatCardSkeleton() {
   return (
@@ -27,6 +28,7 @@ function StatCardSkeleton() {
 
 function EmptyState() {
   const { refreshAll } = useDashboardStore()
+  const { locale } = useI18n()
   
   return (
     <Card className="col-span-full rounded-2xl border-border/50 bg-card/80 backdrop-blur-sm">
@@ -34,13 +36,15 @@ function EmptyState() {
         <div className="rounded-full bg-muted p-4 mb-4">
           <TrendingUp className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="font-semibold text-lg mb-1">No data available</h3>
+        <h3 className="font-semibold text-lg mb-1">
+          {locale === "es" ? "No hay datos disponibles" : locale === "pt" ? "Nenhum dado disponivel" : "No data available"}
+        </h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Start tracking your study sessions to see your stats here.
+          {locale === "es" ? "Comienza a rastrear tus sesiones de estudio para ver tus estadisticas aqui." : locale === "pt" ? "Comece a rastrear suas sessoes de estudo para ver suas estatisticas aqui." : "Start tracking your study sessions to see your stats here."}
         </p>
         <Button onClick={refreshAll} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
+          {locale === "es" ? "Actualizar" : locale === "pt" ? "Atualizar" : "Refresh"}
         </Button>
       </CardContent>
     </Card>
@@ -48,6 +52,7 @@ function EmptyState() {
 }
 
 export function StatCards() {
+  const { t, locale } = useI18n()
   const { stats, isLoadingStats, error, fetchStats } = useDashboardStore()
   const { toast } = useToast()
 
@@ -58,12 +63,12 @@ export function StatCards() {
   useEffect(() => {
     if (error) {
       toast({
-        title: "Error loading stats",
+        title: locale === "es" ? "Error al cargar estadisticas" : locale === "pt" ? "Erro ao carregar estatisticas" : "Error loading stats",
         description: error,
         variant: "destructive",
       })
     }
-  }, [error, toast])
+  }, [error, toast, locale])
 
   if (isLoadingStats) {
     return (
@@ -85,7 +90,7 @@ export function StatCards() {
 
   const statItems = [
     {
-      title: "Weekly Study Hours",
+      title: t("dashboard.weeklyStudyHours"),
       value: `${stats.weeklyStudyHours}h`,
       change: `${stats.weeklyStudyChange >= 0 ? "+" : ""}${stats.weeklyStudyChange}%`,
       changeType: stats.weeklyStudyChange >= 0 ? "positive" : "negative",
@@ -94,27 +99,27 @@ export function StatCards() {
       bgColor: "bg-chart-1/10",
     },
     {
-      title: "Upcoming Exams",
+      title: t("dashboard.upcomingExams"),
       value: String(stats.upcomingExams.length),
       change: stats.upcomingExams.length > 0 
-        ? `Next: ${stats.upcomingExams[0].daysUntil} days` 
-        : "None scheduled",
+        ? (locale === "es" ? `Proximo: ${stats.upcomingExams[0].daysUntil} dias` : locale === "pt" ? `Proximo: ${stats.upcomingExams[0].daysUntil} dias` : `Next: ${stats.upcomingExams[0].daysUntil} days`)
+        : (locale === "es" ? "Sin programar" : locale === "pt" ? "Sem agendamento" : "None scheduled"),
       changeType: "neutral",
       icon: FileText,
       color: "text-chart-3",
       bgColor: "bg-chart-3/10",
     },
     {
-      title: "Pending Tasks",
+      title: t("dashboard.pendingTasks"),
       value: String(stats.pendingTasks.filter(t => !t.completed).length),
-      change: `${stats.tasksDueToday} due today`,
+      change: locale === "es" ? `${stats.tasksDueToday} para hoy` : locale === "pt" ? `${stats.tasksDueToday} para hoje` : `${stats.tasksDueToday} due today`,
       changeType: stats.tasksDueToday > 3 ? "warning" : "neutral",
       icon: CheckCircle,
       color: "text-chart-2",
       bgColor: "bg-chart-2/10",
     },
     {
-      title: "Productivity Score",
+      title: t("dashboard.productivityScore"),
       value: `${stats.productivityScore}%`,
       change: `${stats.productivityChange >= 0 ? "+" : ""}${stats.productivityChange}%`,
       changeType: stats.productivityChange >= 0 ? "positive" : "negative",

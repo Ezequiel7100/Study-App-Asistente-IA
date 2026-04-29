@@ -57,128 +57,8 @@ interface TasksState {
   getAIPrioritization: () => Promise<void>
 }
 
-const initialTasks: Task[] = [
-  {
-    id: "t1",
-    title: "Complete Algorithm Problem Set #5",
-    description: "Solve problems 1-10 on binary trees and graph traversal",
-    subjectId: "1",
-    subjectName: "CS201",
-    dueDate: "2026-04-28",
-    priority: "high",
-    estimatedHours: 2,
-    completed: false,
-    status: "in-progress",
-    createdAt: "2026-04-20",
-    updatedAt: "2026-04-25",
-    aiScore: 95,
-  },
-  {
-    id: "t2",
-    title: "Read Chapter 12 - Integration",
-    description: "Focus on integration by parts and substitution methods",
-    subjectId: "2",
-    subjectName: "MATH202",
-    dueDate: "2026-04-29",
-    priority: "medium",
-    estimatedHours: 1.5,
-    completed: false,
-    status: "todo",
-    createdAt: "2026-04-18",
-    updatedAt: "2026-04-18",
-    aiScore: 72,
-  },
-  {
-    id: "t3",
-    title: "Physics Lab Report",
-    description: "Write up findings from pendulum experiment",
-    subjectId: "3",
-    subjectName: "PHYS101",
-    dueDate: "2026-04-30",
-    priority: "high",
-    estimatedHours: 3,
-    completed: false,
-    status: "todo",
-    createdAt: "2026-04-22",
-    updatedAt: "2026-04-22",
-    aiScore: 88,
-  },
-  {
-    id: "t4",
-    title: "Essay Draft - Technical Communication",
-    description: "First draft of research paper on technical documentation best practices",
-    subjectId: "4",
-    subjectName: "ENG105",
-    dueDate: "2026-05-01",
-    priority: "medium",
-    estimatedHours: 4,
-    completed: false,
-    status: "todo",
-    createdAt: "2026-04-15",
-    updatedAt: "2026-04-15",
-    aiScore: 65,
-  },
-  {
-    id: "t5",
-    title: "Review Organic Chemistry Notes",
-    description: "Go through chapters 5-8 for upcoming quiz",
-    subjectId: "5",
-    subjectName: "CHEM101",
-    dueDate: "2026-04-29",
-    priority: "low",
-    estimatedHours: 1,
-    completed: true,
-    status: "done",
-    createdAt: "2026-04-10",
-    updatedAt: "2026-04-27",
-    aiScore: 45,
-  },
-  {
-    id: "t6",
-    title: "Linear Algebra Quiz Prep",
-    description: "Practice matrix operations and determinants",
-    subjectId: "6",
-    subjectName: "MATH203",
-    dueDate: "2026-05-02",
-    priority: "medium",
-    estimatedHours: 2,
-    completed: false,
-    status: "todo",
-    createdAt: "2026-04-20",
-    updatedAt: "2026-04-20",
-    aiScore: 70,
-  },
-  {
-    id: "t7",
-    title: "Watch Lecture Recording - Trees",
-    description: "Catch up on missed lecture about AVL trees",
-    subjectId: "1",
-    subjectName: "CS201",
-    dueDate: "2026-04-28",
-    priority: "low",
-    estimatedHours: 1,
-    completed: true,
-    status: "done",
-    createdAt: "2026-04-15",
-    updatedAt: "2026-04-26",
-    aiScore: 40,
-  },
-  {
-    id: "t8",
-    title: "Complete Practice Problems",
-    description: "Work through practice set for partial fractions",
-    subjectId: "2",
-    subjectName: "MATH202",
-    dueDate: "2026-05-03",
-    priority: "low",
-    estimatedHours: 1.5,
-    completed: false,
-    status: "todo",
-    createdAt: "2026-04-22",
-    updatedAt: "2026-04-22",
-    aiScore: 55,
-  },
-]
+// Start with empty array - data comes from Supabase
+const initialTasks: Task[] = []
 
 export const useTasksStore = create<TasksState>()(
   persist(
@@ -360,11 +240,16 @@ export const useTasksStore = create<TasksState>()(
           return { ...task, aiScore: Math.min(100, score) }
         })
 
-        set({ tasks: updatedTasks })
+set({ tasks: updatedTasks })
       },
-    }),
+      
+      clearTasks: () => {
+        set({ tasks: [], selectedTask: null })
+      },
+    },
     {
       name: "studysync-tasks",
     }
   )
+)
 )

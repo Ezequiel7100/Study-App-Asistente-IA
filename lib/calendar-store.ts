@@ -74,96 +74,8 @@ interface CalendarState {
   generateAISuggestions: () => Promise<void>
 }
 
-// Initial sample events
-const initialEvents: CalendarEvent[] = [
-  {
-    id: "1",
-    title: "Data Structures Lecture",
-    description: "Weekly lecture on algorithms and data structures",
-    start: "2026-04-28T09:00:00",
-    end: "2026-04-28T10:30:00",
-    category: "class",
-    isRecurring: true,
-    recurrenceRule: { frequency: "weekly", interval: 1 },
-  },
-  {
-    id: "2",
-    title: "Physics Study Block",
-    description: "Review quantum mechanics chapters",
-    start: "2026-04-28T11:00:00",
-    end: "2026-04-28T13:00:00",
-    category: "study",
-    isRecurring: false,
-  },
-  {
-    id: "3",
-    title: "Team Project Meeting",
-    start: "2026-04-28T14:00:00",
-    end: "2026-04-28T15:00:00",
-    category: "work",
-    isRecurring: false,
-  },
-  {
-    id: "4",
-    title: "Gym Session",
-    start: "2026-04-28T17:00:00",
-    end: "2026-04-28T18:30:00",
-    category: "gym",
-    isRecurring: true,
-    recurrenceRule: { frequency: "weekly", interval: 1 },
-  },
-  {
-    id: "5",
-    title: "Algorithm Practice",
-    start: "2026-04-29T16:00:00",
-    end: "2026-04-29T18:00:00",
-    category: "study",
-    isRecurring: false,
-  },
-  {
-    id: "6",
-    title: "Calculus Exam",
-    description: "Final exam - Chapters 8-12",
-    start: "2026-04-30T10:00:00",
-    end: "2026-04-30T12:00:00",
-    category: "exam",
-    isRecurring: false,
-  },
-  {
-    id: "7",
-    title: "Chemistry Lab",
-    start: "2026-04-30T14:00:00",
-    end: "2026-04-30T17:00:00",
-    category: "class",
-    isRecurring: true,
-    recurrenceRule: { frequency: "weekly", interval: 1 },
-  },
-  {
-    id: "8",
-    title: "Study Group",
-    start: "2026-05-01T15:00:00",
-    end: "2026-05-01T17:00:00",
-    category: "study",
-    isRecurring: false,
-  },
-  {
-    id: "9",
-    title: "Part-time Work",
-    start: "2026-05-02T09:00:00",
-    end: "2026-05-02T13:00:00",
-    category: "work",
-    isRecurring: true,
-    recurrenceRule: { frequency: "weekly", interval: 1 },
-  },
-  {
-    id: "10",
-    title: "Personal Time",
-    start: "2026-05-03T14:00:00",
-    end: "2026-05-03T16:00:00",
-    category: "personal",
-    isRecurring: false,
-  },
-]
+// Start with empty array - data comes from Supabase
+const initialEvents: CalendarEvent[] = []
 
 export const useCalendarStore = create<CalendarState>()(
   persist(
@@ -231,7 +143,7 @@ export const useCalendarStore = create<CalendarState>()(
         }
       },
 
-      generateAISuggestions: async () => {
+generateAISuggestions: async () => {
         set({ isLoading: true })
         try {
           const { events } = get()
@@ -250,7 +162,11 @@ export const useCalendarStore = create<CalendarState>()(
           set({ error: (error as Error).message, isLoading: false })
         }
       },
-    }),
+      
+      clearEvents: () => {
+        set({ events: [], activeFilters: [], searchQuery: "" })
+      },
+    },
     {
       name: "studysync-calendar",
       partialize: (state) => ({

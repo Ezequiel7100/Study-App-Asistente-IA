@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Spinner } from "@/components/ui/spinner"
 import type { User } from "@supabase/supabase-js"
+import { useProfileStore } from "@/lib/profile-store"
 
 export default function DashboardLayout({
   children,
@@ -20,6 +21,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const { fetchProfile, clearProfile } = useProfileStore()
 
   useEffect(() => {
     const supabase = createClient()
@@ -31,6 +33,8 @@ export default function DashboardLayout({
         return
       }
       setUser(user)
+      // Fetch user profile on login
+      await fetchProfile()
       setLoading(false)
     }
     
@@ -38,6 +42,7 @@ export default function DashboardLayout({
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || !session?.user) {
+        clearProfile()
         router.replace("/auth/login")
       } else {
         setUser(session.user)
@@ -45,7 +50,7 @@ export default function DashboardLayout({
     })
 
     return () => subscription.unsubscribe()
-  }, [router])
+  }, [router, fetchProfile, clearProfile])
 
   if (loading) {
     return (

@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Spinner } from "@/components/ui/spinner"
 import {
   Settings,
   User,
@@ -26,19 +27,56 @@ import {
   GraduationCap,
   Languages,
   Check,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react"
 import { useI18n, type Locale } from "@/lib/i18n"
 import { useProfileStore } from "@/lib/profile-store"
+import { useTheme } from "next-themes"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 export default function SettingsPage() {
   const { t, locale, setLocale } = useI18n()
-  const { profile, fetchProfile, updateLanguage, isLoading: profileLoading } = useProfileStore()
+  const { profile, fetchProfile, updateProfile, updateLanguage, updateTheme, isLoading: profileLoading } = useProfileStore()
+  const { theme, setTheme } = useTheme()
+  const router = useRouter()
   const [activeSection, setActiveSection] = useState("profile")
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Form state for profile editing
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
+  const [career, setCareer] = useState("")
+  const [university, setUniversity] = useState("")
+  const [semester, setSemester] = useState<number | null>(null)
+
+  // Notifications state
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: true,
+    reminders: true,
+  })
 
   // Fetch profile on mount
   useEffect(() => {
     fetchProfile()
   }, [fetchProfile])
+
+  // Update form when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFirstName(profile.first_name || "")
+      setLastName(profile.last_name || "")
+      setEmail(profile.email || "")
+      setCareer(profile.career || "")
+      setUniversity(profile.university || "")
+      setSemester(profile.semester)
+      setNotifications(profile.notifications || { email: true, push: true, reminders: true })
+    }
+  }, [profile])
 
   // Handle language change with Supabase persistence
   const handleLanguageChange = async (newLocale: Locale) => {
@@ -47,14 +85,56 @@ export default function SettingsPage() {
       await updateLanguage(newLocale)
     }
   }
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    studyReminders: true,
-    deadlineAlerts: true,
-    weeklyReport: false,
-    aiSuggestions: true,
-  })
+
+  // Handle theme change with persistence
+  const handleThemeChange = async (newTheme: "dark" | "light" | "system") => {
+    setTheme(newTheme)
+    if (profile) {
+      await updateTheme(newTheme)
+    }
+  }
+
+  // Save profile changes
+  const handleSaveProfile = async () => {
+    if (!profile) return
+    setIsSaving(true)
+    try {
+      await updateProfile({
+        first_name: firstName,
+        last_name: lastName,
+        career: career || null,
+        university: university || null,
+        semester: semester,
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Save notifications
+  const handleSaveNotifications = async () => {
+    if (!profile) return
+    setIsSaving(true)
+    try {
+      await updateProfile({ notifications })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Handle logout
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
+
+  // Get user initials
+  const getInitials = () => {
+    const first = firstName || profile?.first_name || ""
+    const last = lastName || profile?.last_name || ""
+    return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() || "U"
+  }
 
   const settingsSections = [
     { id: "profile", label: t("common.profile"), icon: User },
@@ -64,15 +144,17 @@ export default function SettingsPage() {
     { id: "ai-settings", label: t("nav.aiTutor"), icon: Bot },
     { id: "calendar", label: t("nav.calendar"), icon: Calendar },
     { id: "integrations", label: t("nav.driveSync"), icon: Cloud },
-    { id: "privacy", label: "Privacy", icon: Shield },
-    { id: "billing", label: "Billing", icon: CreditCard },
+    { id: "privacy", label: locale === "es" ? "Privacidad" : locale === "pt" ? "Privacidade" : "Privacy", icon: Shield },
+    { id: "billing", label: locale === "es" ? "Facturacion" : locale === "pt" ? "Faturamento" : "Billing", icon: CreditCard },
   ]
 
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
-        <p className="text-muted-foreground">Manage your account and preferences</p>
+        <p className="text-muted-foreground">
+          {locale === "es" ? "Administra tu cuenta y preferencias" : locale === "pt" ? "Gerencie sua conta e preferencias" : "Manage your account and preferences"}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
@@ -96,9 +178,12 @@ export default function SettingsPage() {
               <hr className="my-2 border-border/50" />
               <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
                 <HelpCircle className="h-4 w-4" />
-                Help & Support
+                {locale === "es" ? "Ayuda y Soporte" : locale === "pt" ? "Ajuda e Suporte" : "Help & Support"}
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-500/10 transition-all">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-500/10 transition-all"
+              >
                 <LogOut className="h-4 w-4" />
                 {t("common.logout")}
               </button>
@@ -114,59 +199,218 @@ export default function SettingsPage() {
                   <User className="h-5 w-5 text-primary" />
                   {t("common.profile")}
                 </CardTitle>
-                <CardDescription>Manage your personal information</CardDescription>
+                <CardDescription>
+                  {locale === "es" ? "Administra tu informacion personal" : locale === "pt" ? "Gerencie suas informacoes pessoais" : "Manage your personal information"}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center gap-6">
-                  <div className="relative">
-                    <Avatar className="h-24 w-24">
-                      <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face" />
-                      <AvatarFallback>JD</AvatarFallback>
-                    </Avatar>
-                    <Button
-                      size="icon"
-                      className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full"
+                {profileLoading && !profile ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Spinner className="h-8 w-8" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-6">
+                      <div className="relative">
+                        <Avatar className="h-24 w-24">
+                          <AvatarImage src={profile?.avatar_url || undefined} />
+                          <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
+                        </Avatar>
+                        <Button
+                          size="icon"
+                          className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">
+                          {firstName || lastName ? `${firstName} ${lastName}`.trim() : locale === "es" ? "Usuario" : locale === "pt" ? "Usuario" : "User"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">{career || (locale === "es" ? "Sin carrera" : locale === "pt" ? "Sem carreira" : "No career set")}</p>
+                        <Badge className="mt-2 bg-primary/10 text-primary border-primary/20">
+                          {profile?.academic_level === "undergraduate" ? (locale === "es" ? "Pregrado" : locale === "pt" ? "Graduacao" : "Undergraduate") : 
+                           profile?.academic_level === "graduate" ? (locale === "es" ? "Posgrado" : locale === "pt" ? "Pos-graduacao" : "Graduate") : 
+                           (locale === "es" ? "Estudiante" : locale === "pt" ? "Estudante" : "Student")}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">{t("auth.firstName")}</Label>
+                        <Input 
+                          id="firstName" 
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          placeholder={locale === "es" ? "Tu nombre" : locale === "pt" ? "Seu nome" : "Your first name"}
+                          className="rounded-xl" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">{t("auth.lastName")}</Label>
+                        <Input 
+                          id="lastName" 
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          placeholder={locale === "es" ? "Tu apellido" : locale === "pt" ? "Seu sobrenome" : "Your last name"}
+                          className="rounded-xl" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">{t("auth.email")}</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                            id="email" 
+                            value={email}
+                            disabled
+                            className="rounded-xl pl-10 bg-muted/50" 
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="career">{locale === "es" ? "Carrera" : locale === "pt" ? "Carreira" : "Career/Major"}</Label>
+                        <div className="relative">
+                          <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                            id="career" 
+                            value={career}
+                            onChange={(e) => setCareer(e.target.value)}
+                            placeholder={locale === "es" ? "Ej: Ingenieria de Software" : locale === "pt" ? "Ex: Engenharia de Software" : "e.g. Computer Science"}
+                            className="rounded-xl pl-10" 
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="university">{locale === "es" ? "Universidad" : locale === "pt" ? "Universidade" : "University"}</Label>
+                        <Input 
+                          id="university" 
+                          value={university}
+                          onChange={(e) => setUniversity(e.target.value)}
+                          placeholder={locale === "es" ? "Nombre de tu universidad" : locale === "pt" ? "Nome da sua universidade" : "Your university name"}
+                          className="rounded-xl" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="semester">{locale === "es" ? "Semestre" : locale === "pt" ? "Semestre" : "Semester"}</Label>
+                        <Select 
+                          value={semester?.toString() || ""} 
+                          onValueChange={(v) => setSemester(v ? parseInt(v) : null)}
+                        >
+                          <SelectTrigger className="rounded-xl">
+                            <SelectValue placeholder={locale === "es" ? "Seleccionar semestre" : locale === "pt" ? "Selecionar semestre" : "Select semester"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1,2,3,4,5,6,7,8,9,10,11,12].map((sem) => (
+                              <SelectItem key={sem} value={sem.toString()}>
+                                {locale === "es" ? `Semestre ${sem}` : locale === "pt" ? `Semestre ${sem}` : `Semester ${sem}`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button onClick={handleSaveProfile} disabled={isSaving} className="rounded-xl">
+                        {isSaving ? <Spinner className="h-4 w-4 mr-2" /> : null}
+                        {t("common.save")}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {activeSection === "appearance" && (
+            <Card className="rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-primary" />
+                  {t("settings.appearance")}
+                </CardTitle>
+                <CardDescription>
+                  {locale === "es" ? "Personaliza la apariencia de la aplicacion" : locale === "pt" ? "Personalize a aparencia do aplicativo" : "Customize the appearance of the application"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <Label>{locale === "es" ? "Tema" : locale === "pt" ? "Tema" : "Theme"}</Label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <button
+                      onClick={() => handleThemeChange("light")}
+                      className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all ${
+                        theme === "light" 
+                          ? "bg-primary/10 border-2 border-primary" 
+                          : "bg-muted/50 hover:bg-muted border-2 border-transparent"
+                      }`}
                     >
-                      <Camera className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">Jane Doe</h3>
-                    <p className="text-sm text-muted-foreground">Computer Science Major</p>
-                    <Badge className="mt-2 bg-primary/10 text-primary border-primary/20">
-                      Pro Plan
-                    </Badge>
+                      <div className="h-12 w-12 rounded-xl bg-white border flex items-center justify-center">
+                        <Sun className="h-6 w-6 text-amber-500" />
+                      </div>
+                      <span className="text-sm font-medium">
+                        {locale === "es" ? "Claro" : locale === "pt" ? "Claro" : "Light"}
+                      </span>
+                      {theme === "light" && (
+                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
+                    
+                    <button
+                      onClick={() => handleThemeChange("dark")}
+                      className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all ${
+                        theme === "dark" 
+                          ? "bg-primary/10 border-2 border-primary" 
+                          : "bg-muted/50 hover:bg-muted border-2 border-transparent"
+                      }`}
+                    >
+                      <div className="h-12 w-12 rounded-xl bg-zinc-900 border border-zinc-700 flex items-center justify-center">
+                        <Moon className="h-6 w-6 text-blue-400" />
+                      </div>
+                      <span className="text-sm font-medium">
+                        {locale === "es" ? "Oscuro" : locale === "pt" ? "Escuro" : "Dark"}
+                      </span>
+                      {theme === "dark" && (
+                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
+                    
+                    <button
+                      onClick={() => handleThemeChange("system")}
+                      className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all ${
+                        theme === "system" 
+                          ? "bg-primary/10 border-2 border-primary" 
+                          : "bg-muted/50 hover:bg-muted border-2 border-transparent"
+                      }`}
+                    >
+                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-white to-zinc-900 border flex items-center justify-center">
+                        <Monitor className="h-6 w-6 text-gray-500" />
+                      </div>
+                      <span className="text-sm font-medium">
+                        {locale === "es" ? "Sistema" : locale === "pt" ? "Sistema" : "System"}
+                      </span>
+                      {theme === "system" && (
+                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">{t("auth.firstName")}</Label>
-                    <Input id="firstName" defaultValue="Jane" className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">{t("auth.lastName")}</Label>
-                    <Input id="lastName" defaultValue="Doe" className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("auth.email")}</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="email" defaultValue="jane.doe@university.edu" className="rounded-xl pl-10" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="major">Major</Label>
-                    <div className="relative">
-                      <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="major" defaultValue="Computer Science" className="rounded-xl pl-10" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button className="rounded-xl">{t("common.save")}</Button>
-                </div>
+                
+                <p className="text-sm text-muted-foreground">
+                  {locale === "es" 
+                    ? "El tema se aplicara automaticamente en toda la aplicacion."
+                    : locale === "pt"
+                    ? "O tema sera aplicado automaticamente em todo o aplicativo."
+                    : "Theme will be applied automatically throughout the app."}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -242,7 +486,7 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">🇧🇷</span>
                       <div className="text-left">
-                        <p className="font-medium">{locale === "pt" ? "Portugues" : locale === "es" ? "Portugues" : "Portuguese"}</p>
+                        <p className="font-medium">{t("settings.portuguese")}</p>
                         <p className="text-sm text-muted-foreground">Portugues (Brasil)</p>
                       </div>
                     </div>
@@ -272,14 +516,16 @@ export default function SettingsPage() {
                   <Bell className="h-5 w-5 text-primary" />
                   {t("settings.notifications")}
                 </CardTitle>
-                <CardDescription>Configure how you receive notifications</CardDescription>
+                <CardDescription>
+                  {locale === "es" ? "Configura como recibes las notificaciones" : locale === "pt" ? "Configure como voce recebe notificacoes" : "Configure how you receive notifications"}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
                     <div>
-                      <p className="font-medium">Email Notifications</p>
-                      <p className="text-sm text-muted-foreground">Receive updates via email</p>
+                      <p className="font-medium">{locale === "es" ? "Notificaciones por Email" : locale === "pt" ? "Notificacoes por Email" : "Email Notifications"}</p>
+                      <p className="text-sm text-muted-foreground">{locale === "es" ? "Recibe actualizaciones por email" : locale === "pt" ? "Receba atualizacoes por email" : "Receive updates via email"}</p>
                     </div>
                     <Switch
                       checked={notifications.email}
@@ -288,8 +534,8 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
                     <div>
-                      <p className="font-medium">Push Notifications</p>
-                      <p className="text-sm text-muted-foreground">Receive push notifications</p>
+                      <p className="font-medium">{locale === "es" ? "Notificaciones Push" : locale === "pt" ? "Notificacoes Push" : "Push Notifications"}</p>
+                      <p className="text-sm text-muted-foreground">{locale === "es" ? "Recibe notificaciones push" : locale === "pt" ? "Receba notificacoes push" : "Receive push notifications"}</p>
                     </div>
                     <Switch
                       checked={notifications.push}
@@ -298,58 +544,38 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
                     <div>
-                      <p className="font-medium">Study Reminders</p>
-                      <p className="text-sm text-muted-foreground">Get reminded about study sessions</p>
+                      <p className="font-medium">{locale === "es" ? "Recordatorios de Estudio" : locale === "pt" ? "Lembretes de Estudo" : "Study Reminders"}</p>
+                      <p className="text-sm text-muted-foreground">{locale === "es" ? "Recibe recordatorios de sesiones de estudio" : locale === "pt" ? "Receba lembretes de sessoes de estudo" : "Get reminded about study sessions"}</p>
                     </div>
                     <Switch
-                      checked={notifications.studyReminders}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, studyReminders: checked })}
+                      checked={notifications.reminders}
+                      onCheckedChange={(checked) => setNotifications({ ...notifications, reminders: checked })}
                     />
                   </div>
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
-                    <div>
-                      <p className="font-medium">Deadline Alerts</p>
-                      <p className="text-sm text-muted-foreground">Get notified before deadlines</p>
-                    </div>
-                    <Switch
-                      checked={notifications.deadlineAlerts}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, deadlineAlerts: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
-                    <div>
-                      <p className="font-medium">Weekly Report</p>
-                      <p className="text-sm text-muted-foreground">Receive weekly progress summary</p>
-                    </div>
-                    <Switch
-                      checked={notifications.weeklyReport}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, weeklyReport: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
-                    <div>
-                      <p className="font-medium">AI Suggestions</p>
-                      <p className="text-sm text-muted-foreground">Get AI-powered study recommendations</p>
-                    </div>
-                    <Switch
-                      checked={notifications.aiSuggestions}
-                      onCheckedChange={(checked) => setNotifications({ ...notifications, aiSuggestions: checked })}
-                    />
-                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveNotifications} disabled={isSaving} className="rounded-xl">
+                    {isSaving ? <Spinner className="h-4 w-4 mr-2" /> : null}
+                    {t("common.save")}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {activeSection !== "profile" && activeSection !== "notifications" && activeSection !== "language" && (
+          {activeSection !== "profile" && activeSection !== "notifications" && activeSection !== "language" && activeSection !== "appearance" && (
             <Card className="rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm">
               <CardContent className="py-12 text-center">
                 <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold">
-                  {settingsSections.find(s => s.id === activeSection)?.label} Settings
+                  {settingsSections.find(s => s.id === activeSection)?.label} {locale === "es" ? "Configuracion" : locale === "pt" ? "Configuracoes" : "Settings"}
                 </h3>
                 <p className="text-muted-foreground mt-2">
-                  Configure your {settingsSections.find(s => s.id === activeSection)?.label.toLowerCase()} preferences
+                  {locale === "es" 
+                    ? `Configura tus preferencias de ${settingsSections.find(s => s.id === activeSection)?.label.toLowerCase()}`
+                    : locale === "pt"
+                    ? `Configure suas preferencias de ${settingsSections.find(s => s.id === activeSection)?.label.toLowerCase()}`
+                    : `Configure your ${settingsSections.find(s => s.id === activeSection)?.label.toLowerCase()} preferences`}
                 </p>
               </CardContent>
             </Card>

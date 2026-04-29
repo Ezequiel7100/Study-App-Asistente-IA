@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ListTodo, Plus, RefreshCw, Inbox } from "lucide-react"
 import { useDashboardStore, type Task } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
+import { useI18n } from "@/lib/i18n"
 
 const priorityColors = {
   high: "bg-destructive/10 text-destructive border-destructive/20",
@@ -33,14 +34,17 @@ function TaskSkeleton() {
 }
 
 function EmptyTasks() {
+  const { locale } = useI18n()
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center">
       <div className="rounded-full bg-muted p-3 mb-3">
         <Inbox className="h-6 w-6 text-muted-foreground" />
       </div>
-      <p className="text-sm font-medium mb-1">No tasks yet</p>
+      <p className="text-sm font-medium mb-1">
+        {locale === "es" ? "Aun no hay tareas" : locale === "pt" ? "Ainda nao ha tarefas" : "No tasks yet"}
+      </p>
       <p className="text-xs text-muted-foreground">
-        Add your first task to get started.
+        {locale === "es" ? "Agrega tu primera tarea para comenzar." : locale === "pt" ? "Adicione sua primeira tarefa para comecar." : "Add your first task to get started."}
       </p>
     </div>
   )
@@ -112,6 +116,7 @@ function TaskItem({ task }: { task: Task }) {
 }
 
 export function TaskList() {
+  const { t, locale } = useI18n()
   const { stats, isLoadingStats, fetchStats } = useDashboardStore()
   const { toast } = useToast()
 
@@ -120,8 +125,8 @@ export function TaskList() {
 
   const handleAddTask = () => {
     toast({
-      title: "Add Task",
-      description: "Task creation modal would open here.",
+      title: t("tasks.addTask"),
+      description: locale === "es" ? "El modal de creacion de tareas se abriria aqui." : locale === "pt" ? "O modal de criacao de tarefas abriria aqui." : "Task creation modal would open here.",
     })
   }
 
@@ -133,9 +138,15 @@ export function TaskList() {
             <ListTodo className="h-4 w-4 text-chart-4" />
           </div>
           <div>
-            <CardTitle className="text-lg font-semibold">Tasks</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t("tasks.title")}</CardTitle>
             <p className="text-xs text-muted-foreground">
-              {isLoadingStats ? "Loading..." : `${pendingCount} pending tasks`}
+              {isLoadingStats 
+                ? t("common.loading") 
+                : locale === "es" 
+                  ? `${pendingCount} tareas pendientes`
+                  : locale === "pt"
+                  ? `${pendingCount} tarefas pendentes`
+                  : `${pendingCount} pending tasks`}
             </p>
           </div>
         </div>
@@ -151,7 +162,7 @@ export function TaskList() {
           </Button>
           <Button size="sm" className="h-8 rounded-lg gap-1.5" onClick={handleAddTask}>
             <Plus className="h-3.5 w-3.5" />
-            Add Task
+            {t("tasks.addTask")}
           </Button>
         </div>
       </CardHeader>

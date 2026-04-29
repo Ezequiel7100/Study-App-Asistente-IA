@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { useDashboardStore, type Recommendation } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
+import { useI18n } from "@/lib/i18n"
 
 const iconMap = {
   exam_prep: BookOpen,
@@ -42,15 +43,18 @@ function RecommendationSkeleton() {
 
 function EmptyRecommendations() {
   const { fetchRecommendations } = useDashboardStore()
+  const { locale } = useI18n()
   
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center">
       <div className="rounded-full bg-muted p-3 mb-3">
         <Inbox className="h-6 w-6 text-muted-foreground" />
       </div>
-      <p className="text-sm font-medium mb-1">All caught up!</p>
+      <p className="text-sm font-medium mb-1">
+        {locale === "es" ? "Todo al dia!" : locale === "pt" ? "Tudo em dia!" : "All caught up!"}
+      </p>
       <p className="text-xs text-muted-foreground mb-3">
-        No recommendations right now.
+        {locale === "es" ? "No hay recomendaciones ahora." : locale === "pt" ? "Nenhuma recomendacao no momento." : "No recommendations right now."}
       </p>
       <Button 
         onClick={fetchRecommendations} 
@@ -59,7 +63,7 @@ function EmptyRecommendations() {
         className="text-xs"
       >
         <RefreshCw className="h-3 w-3 mr-1" />
-        Check Again
+        {locale === "es" ? "Verificar de nuevo" : locale === "pt" ? "Verificar novamente" : "Check Again"}
       </Button>
     </div>
   )
@@ -130,6 +134,7 @@ function RecommendationItem({ rec }: { rec: Recommendation }) {
 }
 
 export function AIRecommendations() {
+  const { t, locale } = useI18n()
   const { recommendations, isLoadingRecommendations, error, fetchRecommendations } = useDashboardStore()
   const { toast } = useToast()
 
@@ -140,12 +145,12 @@ export function AIRecommendations() {
   useEffect(() => {
     if (error) {
       toast({
-        title: "Error loading recommendations",
+        title: locale === "es" ? "Error al cargar recomendaciones" : locale === "pt" ? "Erro ao carregar recomendacoes" : "Error loading recommendations",
         description: error,
         variant: "destructive",
       })
     }
-  }, [error, toast])
+  }, [error, toast, locale])
 
   return (
     <Card className="rounded-2xl border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
@@ -155,7 +160,7 @@ export function AIRecommendations() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
               <Sparkles className="h-4 w-4 text-primary" />
             </div>
-            <CardTitle className="text-lg font-semibold">AI Recommendations</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t("dashboard.aiRecommendations")}</CardTitle>
           </div>
           <Button
             variant="ghost"
