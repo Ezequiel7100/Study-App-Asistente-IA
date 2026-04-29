@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
   variable: '--font-geist-mono'
 })
 
+// App metadata
 export const metadata: Metadata = {
   title: 'StudySync AI - Your Academic Copilot',
   description: 'AI-powered academic planning, dynamic scheduling, and intelligent tutoring for students',
