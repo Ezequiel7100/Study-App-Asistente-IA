@@ -166,7 +166,7 @@ generateAISuggestions: async () => {
       clearEvents: () => {
         set({ events: [], activeFilters: [], searchQuery: "" })
       },
-    },
+    }),
     {
       name: "studysync-calendar",
       partialize: (state) => ({
