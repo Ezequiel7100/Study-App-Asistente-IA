@@ -246,10 +246,9 @@ set({ tasks: updatedTasks })
       clearTasks: () => {
         set({ tasks: [], selectedTask: null })
       },
-    },
+    }),
     {
       name: "studysync-tasks",
     }
   )
-)
 )

@@ -64,14 +64,20 @@ export default function TasksPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
 
+  // Handle hydration - tasks and subjects might be undefined during initial render
+  const tasksList = tasks ?? []
+  const subjectsList = subjects ?? []
+
   // Calculate AI prioritization on mount
   useEffect(() => {
-    getAIPrioritization()
-  }, [])
+    if (tasksList.length > 0) {
+      getAIPrioritization()
+    }
+  }, [tasksList.length])
 
   // Filter and sort tasks
   const filteredTasks = useMemo(() => {
-    let result = [...tasks]
+    let result = [...tasksList]
 
     // Filter by completion
     if (!showCompleted) {
@@ -118,14 +124,14 @@ export default function TasksPage() {
     })
 
     return result
-  }, [tasks, showCompleted, filterPriority, filterSubject, searchQuery, sortBy])
+  }, [tasksList, showCompleted, filterPriority, filterSubject, searchQuery, sortBy])
 
   // Stats
   const stats = {
-    total: tasks.length,
-    completed: tasks.filter((t) => t.completed).length,
-    pending: tasks.filter((t) => !t.completed).length,
-    highPriority: tasks.filter((t) => t.priority === "high" && !t.completed).length,
+    total: tasksList.length,
+    completed: tasksList.filter((t) => t.completed).length,
+    pending: tasksList.filter((t) => !t.completed).length,
+    highPriority: tasksList.filter((t) => t.priority === "high" && !t.completed).length,
   }
 
   const handleEditTask = (task: Task) => {
@@ -147,10 +153,10 @@ export default function TasksPage() {
 
   // Get top AI recommendation
   const topRecommendation = useMemo(() => {
-    const pendingTasks = tasks.filter((t) => !t.completed && t.aiScore)
+    const pendingTasks = tasksList.filter((t) => !t.completed && t.aiScore)
     if (pendingTasks.length === 0) return null
     return pendingTasks.sort((a, b) => (b.aiScore || 0) - (a.aiScore || 0))[0]
-  }, [tasks])
+  }, [tasksList])
 
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
@@ -310,7 +316,7 @@ export default function TasksPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{locale === "es" ? "Todas las materias" : locale === "pt" ? "Todas as materias" : "All Subjects"}</SelectItem>
-              {subjects
+              {subjectsList
                 .filter((s) => !s.archived)
                 .map((subject) => (
                   <SelectItem key={subject.id} value={subject.id}>

@@ -56,8 +56,11 @@ export default function SubjectsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
 
+  // Handle hydration - subjects might be undefined during initial render
+  const subjectsList = subjects ?? []
+
   // Filter subjects
-  const filteredSubjects = subjects.filter((subject) => {
+  const filteredSubjects = subjectsList.filter((subject) => {
     if (!showArchived && subject.archived) return false
     if (showArchived && !subject.archived) return false
     if (searchQuery) {
@@ -72,7 +75,7 @@ export default function SubjectsPage() {
   })
 
   // Calculate stats
-  const activeSubjects = subjects.filter((s) => !s.archived)
+  const activeSubjects = subjectsList.filter((s) => !s.archived)
   const totalCredits = activeSubjects.reduce((acc, s) => acc + s.credits, 0)
   const totalHoursStudied = activeSubjects.reduce((acc, s) => acc + s.hoursStudied, 0)
   const avgGpa = 3.65 // Mock GPA

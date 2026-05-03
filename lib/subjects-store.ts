@@ -198,10 +198,9 @@ removeExamDate: (subjectId, examId) => {
       clearSubjects: () => {
         set({ subjects: [], selectedSubject: null })
       },
-    },
+    }),
     {
       name: "studysync-subjects",
     }
   )
-)
 )
